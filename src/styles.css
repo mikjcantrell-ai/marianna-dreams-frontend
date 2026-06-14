@@ -1,0 +1,208 @@
+/* ================================================================
+   MARIANNA DREAMS — Global Design System (styles.css)
+   Roots · Folk · Country · Indie | Warm Americana Aesthetic
+   ================================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400;1,600&family=Lato:wght@300;400;700&family=Dancing+Script:wght@600;700&display=swap');
+
+/* ——— CSS CUSTOM PROPERTIES ——— */
+:root {
+  --amber:          #D4863A;
+  --amber-light:    #E8A85A;
+  --amber-dark:     #A8621A;
+  --honey:          #C4923E;
+  --cream:          #F5EDD8;
+  --cream-dark:     #E8D8B8;
+  --sage:           #6B7C5E;
+  --sage-light:     #8A9E7A;
+  --pine:           #2D4A3E;
+  --pine-dark:      #1A2E26;
+  --dusk:           #1C2340;
+  --dusk-mid:       #2A3560;
+  --rose:           #C4746A;
+  --firefly:        #F0E080;
+  --white:          #FFFFFF;
+  --text-dark:      #2A1E14;
+  --text-mid:       #4A3828;
+  --text-light:     #7A6654;
+
+  --font-script:  'Dancing Script', cursive;
+  --font-serif:   'Playfair Display', Georgia, serif;
+  --font-sans:    'Lato', 'Helvetica Neue', sans-serif;
+
+  --section-pad:  clamp(80px, 10vw, 140px);
+  --container:    1200px;
+  --gutter:       clamp(20px, 5vw, 60px);
+  --ease:         cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  --ease-bounce:  cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ——— RESET & BASE ——— */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; font-size: 16px; }
+body {
+  font-family: var(--font-sans);
+  background-color: var(--cream);
+  color: var(--text-dark);
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+img { max-width: 100%; height: auto; display: block; }
+a { text-decoration: none; color: inherit; }
+
+/* ——— SCROLLBAR ——— */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--pine-dark); }
+::-webkit-scrollbar-thumb { background: var(--amber); border-radius: 3px; }
+
+/* ——— UTILITY CLASSES ——— */
+.section-label {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 12px;
+}
+.section-label.light { color: var(--amber-light); }
+
+.section-title {
+  font-family: var(--font-serif);
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-dark);
+  margin-bottom: 20px;
+}
+.section-title em { font-style: italic; color: var(--amber); }
+.section-title.light { color: var(--cream); }
+.section-title.light em { color: var(--amber-light); }
+
+.section-desc {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  color: var(--text-light);
+  max-width: 560px;
+  line-height: 1.7;
+}
+.section-desc.light { color: var(--cream-dark); }
+
+.section-header {
+  margin-bottom: clamp(40px, 6vw, 80px);
+}
+.section-header.center {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ——— BUTTONS ——— */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 32px;
+  background: var(--amber);
+  color: var(--white);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.2s var(--ease-bounce), box-shadow 0.25s;
+  box-shadow: 0 4px 20px rgba(212, 134, 58, 0.35);
+}
+.btn-primary:hover {
+  background: var(--amber-light);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(212, 134, 58, 0.5);
+}
+
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 30px;
+  border: 1.5px solid rgba(245, 237, 216, 0.4);
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  border-radius: 2px;
+  background: none;
+  cursor: pointer;
+  transition: border-color 0.25s, background 0.25s, transform 0.2s var(--ease-bounce);
+}
+.btn-ghost:hover {
+  border-color: var(--cream);
+  background: rgba(245, 237, 216, 0.1);
+  transform: translateY(-2px);
+}
+
+/* ——— FORM ELEMENTS ——— */
+.form-input {
+  width: 100%;
+  padding: 14px 18px;
+  background: rgba(245, 237, 216, 0.08);
+  border: 1px solid rgba(245, 237, 216, 0.2);
+  border-radius: 3px;
+  color: var(--cream);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.25s, background 0.25s;
+}
+.form-input::placeholder { color: rgba(245, 237, 216, 0.35); }
+.form-input:focus {
+  border-color: rgba(212, 134, 58, 0.5);
+  background: rgba(245, 237, 216, 0.12);
+}
+
+/* ——— CARD HOVER LIFT ——— */
+.card-hover {
+  transition: transform 0.3s var(--ease), box-shadow 0.3s;
+}
+.card-hover:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+}
+
+/* ——— ANIMATIONS ——— */
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fireflyBlink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+@keyframes fireflyFloat {
+  0%   { transform: translate(0, 0); }
+  25%  { transform: translate(var(--dx1), var(--dy1)); }
+  50%  { transform: translate(var(--dx2), var(--dy2)); }
+  75%  { transform: translate(var(--dx3), var(--dy3)); }
+  100% { transform: translate(0, 0); }
+}
+@keyframes scrollPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 1; }
+}
+
+/* ——— RESPONSIVE CONTAINER ——— */
+.container {
+  max-width: var(--container);
+  margin: 0 auto;
+  padding: 0 var(--gutter);
+}

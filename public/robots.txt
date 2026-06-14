@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block admin areas from crawlers
+Disallow: /admin
+Disallow: /admin/login
+
+# Sitemap location
+Sitemap: https://mariannadreams.com/sitemap.xml
