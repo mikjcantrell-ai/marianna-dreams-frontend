@@ -24,7 +24,7 @@ import { RouterLink } from '@angular/router';
           <img src="assets/images/about_bg.png"
                alt="Acoustic guitar on a wildflower Carolina porch at golden hour"
                class="story-img" />
-          <div class="story-badge"><span>Est.</span><span class="badge-year">2024</span></div>
+          <div class="story-badge"><span>Est.</span><span class="badge-year">2026</span></div>
         </div>
         <div class="story-content container-pad">
           <span class="section-label">Our Story</span>

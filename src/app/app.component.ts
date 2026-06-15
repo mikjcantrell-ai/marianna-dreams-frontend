@@ -72,7 +72,7 @@ import { SeoService } from './core/services/seo.service';
           <a routerLink="/contact">Connect</a>
           <a href="https://open.spotify.com/track/4LvdAmtQev8e3n9pSkXvlu" target="_blank" rel="noopener">Spotify</a>
         </div>
-        <p class="footer-copy">© 2024 Marianna Dreams. Crafted with AI, inspired by the American South.</p>
+        <p class="footer-copy">© 2026 Marianna Dreams. Crafted with AI, inspired by the American South.</p>
       </div>
     </footer>
   `,

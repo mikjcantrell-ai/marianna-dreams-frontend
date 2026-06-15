@@ -32,7 +32,7 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
             <span class="album-eyebrow">Self-Titled Debut Album</span>
             <h2 class="album-name">Marianna Dreams</h2>
             <div class="album-meta">
-              <span>2024</span>
+              <span>2026</span>
               <span class="meta-dot">&bull;</span>
               <span>13 Tracks</span>
               <span class="meta-dot">&bull;</span>

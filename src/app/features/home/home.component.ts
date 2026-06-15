@@ -43,7 +43,7 @@ import { API_BASE } from '../../core/config/api.config';
       <div class="about-image-col">
         <img src="assets/images/about_bg.png" alt="Acoustic guitar on a wildflower porch at golden hour"
              class="about-img" />
-        <div class="about-badge"><span>Est.</span><span class="badge-year">2024</span></div>
+        <div class="about-badge"><span>Est.</span><span class="badge-year">2026</span></div>
       </div>
       <div class="about-content">
         <span class="section-label">Our Story</span>
