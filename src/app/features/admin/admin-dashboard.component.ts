@@ -56,6 +56,9 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
         <button class="admin-tab" [class.active]="tab==='content'" (click)="switchToContent()" id="content-tab">
           ✏️ Content
         </button>
+        <button class="admin-tab" [class.active]="tab==='artist'" (click)="switchToArtist()" id="artist-tab">
+          🎵 Artist Profile
+        </button>
       </nav>
 
       <div class="admin-body">
@@ -371,6 +374,65 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
           </ng-container>
         </div>
 
+        <!-- ── ARTIST PROFILE TAB ─────────────────────────────────────────────── -->
+        <div *ngIf="tab==='artist'">
+          <div class="section-head">
+            <h2>Artist Profile</h2>
+          </div>
+          <p class="content-intro">These details appear on the About page and Music page. Leave any field blank to hide it on the site.</p>
+
+          <div class="loading" *ngIf="artistLoading">Loading…</div>
+          <div class="error-msg" *ngIf="artistError">{{ artistError }}</div>
+
+          <div class="artist-form" *ngIf="!artistLoading && artistProfile">
+            <div class="af-group">
+              <label class="af-label">Artist / Project Name</label>
+              <input class="af-input" [(ngModel)]="artistProfile.name" id="af-name" placeholder="Marianna Dreams" />
+            </div>
+            <div class="af-group">
+              <label class="af-label">Website URL</label>
+              <input class="af-input" [(ngModel)]="artistProfile.websiteUrl" id="af-website"
+                     placeholder="https://mikstermedia.com" />
+              <span class="af-hint">Shows as a “Visit Website” button on the Music page and About page.</span>
+            </div>
+            <div class="af-group">
+              <label class="af-label">Contact / Booking Email</label>
+              <input class="af-input" type="email" [(ngModel)]="artistProfile.contactEmail" id="af-email"
+                     placeholder="hello@mariannadreams.com" />
+            </div>
+            <div class="af-group">
+              <label class="af-label">Tagline</label>
+              <input class="af-input" [(ngModel)]="artistProfile.tagline" id="af-tagline"
+                     placeholder="Roots · Folk · Country · Indie" />
+            </div>
+            <div class="af-group">
+              <label class="af-label">Spotify URL</label>
+              <input class="af-input" [(ngModel)]="artistProfile.spotifyUrl" id="af-spotify"
+                     placeholder="https://open.spotify.com/album/…" />
+            </div>
+            <div class="af-group">
+              <label class="af-label">Instagram URL</label>
+              <input class="af-input" [(ngModel)]="artistProfile.instagramUrl" id="af-instagram"
+                     placeholder="https://instagram.com/mariannadreams" />
+            </div>
+            <div class="af-group">
+              <label class="af-label">Facebook URL</label>
+              <input class="af-input" [(ngModel)]="artistProfile.facebookUrl" id="af-facebook"
+                     placeholder="https://facebook.com/mariannadreams" />
+            </div>
+            <div class="af-actions">
+              <button class="btn-save" (click)="saveArtistProfile()" [disabled]="artistSaving" id="save-artist-btn">
+                {{ artistSaving ? 'Saving…' : '💾 Save Artist Profile' }}
+              </button>
+              <span class="af-status" *ngIf="artistStatus"
+                    [class.af-ok]="artistStatus === 'ok'"
+                    [class.af-err]="artistStatus === 'err'">
+                {{ artistStatus === 'ok' ? '✓ Saved! Changes are live.' : '✗ Save failed — check connection.' }}
+              </span>
+            </div>
+          </div>
+        </div>
+
       </div><!-- /.admin-body -->
     </div><!-- /.admin-shell -->
   `,
@@ -637,6 +699,28 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
     .cf-ok { color: #2ecc71; }
     .cf-err { color: #e74c3c; }
 
+    /* ── Artist Profile form ─────────────────────────────────────────────── */
+    .artist-form {
+      background: #fff; border: 1px solid #e8e0d0; border-radius: 6px;
+      padding: 28px; max-width: 680px; display: flex; flex-direction: column; gap: 20px;
+    }
+    .af-group { display: flex; flex-direction: column; gap: 6px; }
+    .af-label {
+      font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.08em; color: #888;
+    }
+    .af-input {
+      padding: 10px 14px; border: 1px solid #ddd; border-radius: 4px;
+      font-size: 0.92rem; font-family: var(--font-sans); color: #2a2017;
+      background: #fafaf8; outline: none; transition: border-color 0.2s;
+    }
+    .af-input:focus { border-color: var(--amber); }
+    .af-hint { font-size: 0.75rem; color: #aaa; line-height: 1.5; }
+    .af-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 4px; }
+    .af-status { font-size: 0.82rem; font-weight: 700; }
+    .af-ok { color: #2ecc71; }
+    .af-err { color: #e74c3c; }
+
     .form-grid {
       display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px;
     }
@@ -831,7 +915,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
   `]
 })
 export class AdminDashboardComponent implements OnInit {
-  tab: 'songs' | 'lyrics' | 'messages' | 'content' = 'songs';
+  tab: 'songs' | 'lyrics' | 'messages' | 'content' | 'artist' = 'songs';
 
   songs: Song[] = [];
   songsLoading = false;
@@ -1315,5 +1399,71 @@ export class AdminDashboardComponent implements OnInit {
         setTimeout(() => delete this.contentStatus[item.key], 4000);
       }
     });
+  }
+
+  // ── Artist Profile ─────────────────────────────────────────────────────────
+  artistProfile: {
+    name: string; websiteUrl: string; contactEmail: string; tagline: string;
+    spotifyUrl: string; instagramUrl: string; facebookUrl: string;
+  } | null = null;
+  artistLoading = false;
+  artistError   = '';
+  artistSaving  = false;
+  artistStatus: 'ok' | 'err' | '' = '';
+
+  switchToArtist(): void {
+    this.tab = 'artist';
+    if (!this.artistProfile) this.loadArtistProfile();
+  }
+
+  loadArtistProfile(): void {
+    this.artistLoading = true;
+    this.artistError   = '';
+    this.http.get<any>(`${API_BASE}/api/artist`).subscribe({
+      next: p => {
+        this.artistProfile = {
+          name:         p.name         ?? '',
+          websiteUrl:   p.websiteUrl   ?? '',
+          contactEmail: p.contactEmail ?? '',
+          tagline:      p.tagline      ?? '',
+          spotifyUrl:   p.spotifyUrl   ?? '',
+          instagramUrl: p.instagramUrl ?? '',
+          facebookUrl:  p.facebookUrl  ?? '',
+        };
+        this.artistLoading = false;
+      },
+      error: () => {
+        this.artistError   = 'Failed to load artist profile.';
+        this.artistLoading = false;
+      }
+    });
+  }
+
+  saveArtistProfile(): void {
+    if (!this.artistProfile) return;
+    this.artistSaving = true;
+    this.artistStatus = '';
+    this.http.put<any>(`${API_BASE}/api/artist`, this.artistProfile, { headers: this.headers })
+      .subscribe({
+        next: updated => {
+          this.artistProfile = {
+            name:         updated.name         ?? '',
+            websiteUrl:   updated.websiteUrl   ?? '',
+            contactEmail: updated.contactEmail ?? '',
+            tagline:      updated.tagline      ?? '',
+            spotifyUrl:   updated.spotifyUrl   ?? '',
+            instagramUrl: updated.instagramUrl ?? '',
+            facebookUrl:  updated.facebookUrl  ?? '',
+          };
+          this.artistSaving = false;
+          this.artistStatus = 'ok';
+          setTimeout(() => this.artistStatus = '', 4000);
+        },
+        error: () => {
+          this.artistSaving = false;
+          this.artistStatus = 'err';
+          setTimeout(() => this.artistStatus = '', 4000);
+        }
+      });
   }
 }

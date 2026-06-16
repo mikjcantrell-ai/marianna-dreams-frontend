@@ -1,9 +1,11 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 import { SongService } from '../../core/services/song.service';
 import { Song } from '../../core/models';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
+import { API_BASE } from '../../core/config/api.config';
 
 @Component({
   selector: 'app-music',
@@ -45,6 +47,14 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
              id="album-spotify-link">
             <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
             Listen on Spotify
+          </a>
+          <!-- Artist website link (shown when set in admin) -->
+          <a *ngIf="artistWebsite"
+             [href]="artistWebsite"
+             target="_blank" rel="noopener"
+             class="album-website-btn"
+             id="artist-website-link">
+            🌐 Visit Website
           </a>
         </div>
       </div>
@@ -354,6 +364,23 @@ import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
     }
     .album-spotify-btn:hover { opacity: 0.88; transform: translateY(-2px); }
     .album-spotify-btn svg { width: 16px; height: 16px; flex-shrink: 0; }
+    .album-website-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      background: rgba(245,237,216,0.1);
+      color: var(--cream);
+      border: 1px solid rgba(245,237,216,0.25);
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      transition: opacity 0.2s, transform 0.2s var(--ease-bounce), background 0.2s;
+      white-space: nowrap;
+    }
+    .album-website-btn:hover { background: rgba(245,237,216,0.18); transform: translateY(-2px); }
 
     @media (max-width: 640px) {
       .song-row { grid-template-columns: auto 1fr; gap: 16px; }
@@ -369,13 +396,21 @@ export class MusicComponent implements OnInit {
   icons = ['🌙', '🌾', '🍂'];
   firstEmbedSong: Song | null = null;
   safeEmbedUrl: SafeResourceUrl = '';
+  artistWebsite = '';
 
   constructor(
     private songService: SongService,
-    private sanitizer: DomSanitizer
+    private sanitizer: DomSanitizer,
+    private http: HttpClient
   ) {}
 
   ngOnInit(): void {
+    // Load artist profile for website link
+    this.http.get<{ websiteUrl: string }>(`${API_BASE}/api/artist`).subscribe({
+      next: p => { this.artistWebsite = p.websiteUrl || ''; },
+      error: () => {}
+    });
+
     this.songService.getAllSongs().subscribe({
       next: songs => {
         this.songs = songs;

@@ -1,10 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
+import { API_BASE } from '../../core/config/api.config';
 
 @Component({
   selector: 'app-about',
   standalone: true,
-  imports: [RouterLink],
+  imports: [CommonModule, RouterLink],
   template: `
     <div class="about-page">
 
@@ -64,6 +67,12 @@ import { RouterLink } from '@angular/router';
                 are generated using AI music tools (primarily <strong>Suno</strong>).
                 Human words. AI voice. A new kind of Americana.
               </p>
+            </div>
+            <!-- Artist website link -->
+            <div class="artist-website-row" *ngIf="artistWebsite">
+              <a [href]="artistWebsite" target="_blank" rel="noopener" class="artist-website-link" id="about-artist-website">
+                🌐 Visit Artist Website
+              </a>
             </div>
           </div>
 
@@ -380,6 +389,24 @@ import { RouterLink } from '@angular/router';
     .creator-ai-note p strong { color: var(--text-mid); }
     .creator-ai-note p em { font-style: italic; }
 
+    /* Artist website link */
+    .artist-website-row { margin-top: 18px; padding-top: 16px; border-top: 1px solid rgba(45,74,62,0.12); }
+    .artist-website-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 20px;
+      background: rgba(212,134,58,0.1);
+      border: 1px solid rgba(212,134,58,0.3);
+      border-radius: 4px;
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--amber-dark);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .artist-website-link:hover { background: rgba(212,134,58,0.2); transform: translateY(-2px); }
+
     /* Transparency Banner */
     .transparency-banner {
       background: linear-gradient(135deg, var(--pine) 0%, var(--dusk) 100%);
@@ -618,4 +645,15 @@ import { RouterLink } from '@angular/router';
     }
   `]
 })
-export class AboutComponent {}
+export class AboutComponent implements OnInit {
+  artistWebsite = '';
+
+  constructor(private http: HttpClient) {}
+
+  ngOnInit(): void {
+    this.http.get<{ websiteUrl: string }>(`${API_BASE}/api/artist`).subscribe({
+      next: p => { this.artistWebsite = p.websiteUrl || ''; },
+      error: () => {}
+    });
+  }
+}
