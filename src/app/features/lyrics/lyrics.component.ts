@@ -320,6 +320,20 @@ export class LyricsComponent implements OnInit, AfterViewInit {
           description: `Read the full lyrics for "${song.title}" by Marianna Dreams. ${song.description ?? ''}`.trim(),
           url: `https://mariannadreams.com/lyrics/${id}`,
           type: 'music.song',
+          jsonLd: {
+            "@context": "https://schema.org",
+            "@type": "MusicRecording",
+            "name": song.title,
+            "url": `https://mariannadreams.com/lyrics/${id}`,
+            "byArtist": {
+              "@type": "MusicGroup",
+              "name": "Marianna Dreams"
+            },
+            "inAlbum": {
+              "@type": "MusicAlbum",
+              "name": "Marianna Dreams"
+            }
+          }
         });
         this.lyricService.getLyricsBySong(id).subscribe({
           next: lyrics => { this.lyrics = lyrics; this.loading = false; },

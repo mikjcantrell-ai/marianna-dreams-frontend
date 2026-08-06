@@ -12,11 +12,39 @@ export interface PageSeoConfig {
   image?: string;
   /** 'website' | 'music.album' | 'article' — defaults to 'website' */
   type?: string;
+  /** JSON-LD structured data schema */
+  jsonLd?: any;
 }
 
 const SITE_NAME   = 'Marianna Dreams';
 const BASE_URL    = 'https://mariannadreams.com';
 const DEFAULT_IMG = `${BASE_URL}/assets/images/og_image.png`;
+
+const DEFAULT_JSON_LD = {
+  "@context": "https://schema.org",
+  "@type": "MusicGroup",
+  "name": "Marianna Dreams",
+  "url": "https://mariannadreams.com",
+  "logo": "https://mariannadreams.com/assets/images/favicon-192.png",
+  "image": "https://mariannadreams.com/assets/images/og_image.png",
+  "description": "An AI-crafted musical project steeped in the sights, sounds, and soul of the American South. Roots, folk, country, and indie.",
+  "genre": ["Roots", "Folk", "Country", "Indie", "Americana"],
+  "foundingLocation": {
+    "@type": "Place",
+    "name": "American South"
+  },
+  "sameAs": [
+    "https://open.spotify.com/album/0BB8BawGzPa6yNdyf9vGBb",
+    "https://www.youtube.com/@mariannadreams"
+  ],
+  "album": {
+    "@type": "MusicAlbum",
+    "name": "Marianna Dreams",
+    "url": "https://open.spotify.com/album/0BB8BawGzPa6yNdyf9vGBb",
+    "numTracks": 13,
+    "datePublished": "2026"
+  }
+};
 
 /** Default meta per route path */
 const ROUTE_META: Record<string, PageSeoConfig> = {
@@ -26,13 +54,15 @@ const ROUTE_META: Record<string, PageSeoConfig> = {
       'Marianna Dreams — an AI-crafted roots, folk, country, and indie band born from the red clay roads and honeysuckle summers of the American South.',
     url: BASE_URL,
     type: 'website',
+    jsonLd: DEFAULT_JSON_LD,
   },
   '/music': {
     title: 'Music | Marianna Dreams',
     description:
-      'Stream the self-titled debut album by Marianna Dreams on Spotify. 13 songs steeped in Appalachian roots, folk storytelling, and Southern soul.',
+      'Stream the self-titled debut album by Marianna Dreams on Spotify. 13 songs steeped in industrial static, atmospheric pop, and moody electronic soul.',
     url: `${BASE_URL}/music`,
     type: 'music.album',
+    jsonLd: DEFAULT_JSON_LD,
   },
   '/about': {
     title: 'Our Story | Marianna Dreams',
@@ -40,6 +70,7 @@ const ROUTE_META: Record<string, PageSeoConfig> = {
       'Learn the story behind Marianna Dreams — an AI-crafted musical project born from red clay roads, honeysuckle summers, and the soul of the American South.',
     url: `${BASE_URL}/about`,
     type: 'website',
+    jsonLd: DEFAULT_JSON_LD,
   },
   '/contact': {
     title: 'Connect | Marianna Dreams',
@@ -47,6 +78,7 @@ const ROUTE_META: Record<string, PageSeoConfig> = {
       'Reach out to Marianna Dreams for bookings, collaborations, press inquiries, or just to say hello. We love hearing from fans.',
     url: `${BASE_URL}/contact`,
     type: 'website',
+    jsonLd: DEFAULT_JSON_LD,
   },
 };
 
@@ -77,6 +109,10 @@ export class SeoService {
     const url   = cfg.url  ?? BASE_URL;
     const img   = cfg.image ?? DEFAULT_IMG;
     const type  = cfg.type  ?? 'website';
+
+    if (cfg.jsonLd) {
+      this.setJsonLd(cfg.jsonLd);
+    }
 
     // ── Basic ─────────────────────────────────────────────────────────────
     this.titleSvc.setTitle(title);
@@ -133,5 +169,17 @@ export class SeoService {
       doc.head.appendChild(link);
     }
     link.setAttribute('href', url);
+  }
+
+  setJsonLd(schema: any): void {
+    const doc = document;
+    let script = doc.querySelector<HTMLScriptElement>('#seo-jsonld');
+    if (!script) {
+      script = doc.createElement('script');
+      script.id = 'seo-jsonld';
+      script.type = 'application/ld+json';
+      doc.head.appendChild(script);
+    }
+    script.text = JSON.stringify(schema);
   }
 }

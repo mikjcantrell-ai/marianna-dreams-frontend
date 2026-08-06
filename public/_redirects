@@ -1,3 +1,4 @@
 http://mariannadreams.com/* https://mariannadreams.com/:splat 301!
 http://www.mariannadreams.com/* https://mariannadreams.com/:splat 301!
+/sitemap.xml https://marianna-dreams-backend-production.up.railway.app/api/sitemap 200!
 /* /index.html 200
