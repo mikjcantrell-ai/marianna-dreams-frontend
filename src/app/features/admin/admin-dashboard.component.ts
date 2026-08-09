@@ -469,8 +469,9 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                 <div class="song-meta">{{ item.publishedDate | date:'medium' }}</div>
               </div>
               <div class="song-actions">
-                <button class="btn-edit" (click)="editNews(item)">Edit</button>
-                <button class="btn-delete" (click)="deleteNews(item.id!)">Delete</button>
+                <button class="btn-copy-sm" (click)="copyNews(item)">Copy</button>
+                <button class="btn-edit-sm" (click)="editNews(item)">Edit</button>
+                <button class="btn-danger-sm" (click)="deleteNews(item.id!)">Delete</button>
               </div>
             </div>
           </div>
@@ -581,6 +582,10 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
     .btn-danger-sm {
       padding: 5px 10px; background: rgba(220,80,80,0.1); color: #c0392b;
       border: 1px solid rgba(220,80,80,0.3); border-radius: 3px; font-size: 0.8rem; cursor: pointer;
+    }
+    .btn-copy-sm {
+      padding: 5px 12px; background: rgba(46, 204, 113, 0.1); color: #2ecc71;
+      border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 3px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
     }
 
     /* ── Inline form ─────────────────────────────────────────────────────── */
@@ -1542,6 +1547,12 @@ export class AdminDashboardComponent implements OnInit {
 
   editNews(item: News) {
     this.newNews = { ...item };
+  }
+
+  copyNews(item: News) {
+    this.newNews = { ...item, id: undefined, title: item.title + ' (Copy)' };
+    // Scroll to the top of the page so the user sees the form
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   saveNewNews() {
