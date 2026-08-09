@@ -38,6 +38,10 @@ import { SeoService } from './core/services/seo.service';
                (click)="menuOpen=false">Music</a>
           </li>
           <li>
+            <a routerLink="/news" routerLinkActive="active"
+               (click)="menuOpen=false">News</a>
+          </li>
+          <li>
             <a routerLink="/contact" routerLinkActive="active"
                (click)="menuOpen=false">Connect</a>
           </li>
@@ -69,6 +73,7 @@ import { SeoService } from './core/services/seo.service';
           <a routerLink="/">Home</a>
           <a routerLink="/about">Our Story</a>
           <a routerLink="/music">Music</a>
+          <a routerLink="/news">News</a>
           <a routerLink="/contact">Connect</a>
           <a href="https://open.spotify.com/track/4LvdAmtQev8e3n9pSkXvlu" target="_blank" rel="noopener">Spotify</a>
         </div>

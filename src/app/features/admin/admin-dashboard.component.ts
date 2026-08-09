@@ -18,6 +18,9 @@ interface Inquiry {
   messageBody: string; receivedDate: string;
   read: boolean; replied: boolean; replyText: string | null; repliedDate: string | null;
 }
+interface News {
+  id?: number; title: string; content: string; imageUrl: string; publishedDate?: string;
+}
 
 const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
 
@@ -58,6 +61,9 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
         </button>
         <button class="admin-tab" [class.active]="tab==='artist'" (click)="switchToArtist()" id="artist-tab">
           🎵 Artist Profile
+        </button>
+        <button class="admin-tab" [class.active]="tab==='news'" (click)="switchToNews()" id="news-tab">
+          📰 News
         </button>
       </nav>
 
@@ -429,6 +435,43 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                     [class.af-err]="artistStatus === 'err'">
                 {{ artistStatus === 'ok' ? '✓ Saved! Changes are live.' : '✗ Save failed — check connection.' }}
               </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── NEWS TAB ──────────────────────────────────────────────────── -->
+        <div *ngIf="tab==='news'">
+          <div class="section-head">
+            <h2>News Articles</h2>
+            <button class="btn-add" (click)="startNewNews()" id="add-news-btn">+ Add News</button>
+          </div>
+
+          <div class="inline-form" *ngIf="newNews">
+            <h3>{{ newNews.id ? 'Edit' : 'New' }} Article</h3>
+            <div class="form-grid">
+              <label>Title *<input [(ngModel)]="newNews.title" placeholder="Article Title" /></label>
+              <label>Image URL<input [(ngModel)]="newNews.imageUrl" placeholder="https://..." /></label>
+              <label class="full">Content *<textarea [(ngModel)]="newNews.content" rows="6"></textarea></label>
+            </div>
+            <div class="form-actions">
+              <button class="btn-save" (click)="saveNewNews()" id="save-news-btn">Save Article</button>
+              <button class="btn-cancel" (click)="newNews=null">Cancel</button>
+            </div>
+          </div>
+
+          <div class="loading" *ngIf="newsLoading">Loading…</div>
+          <div class="error-msg" *ngIf="newsError">{{ newsError }}</div>
+
+          <div class="songs-list" *ngIf="!newsLoading && newsList.length > 0">
+            <div class="song-card" *ngFor="let item of newsList">
+              <div class="song-info">
+                <h4>{{ item.title }}</h4>
+                <div class="song-meta">{{ item.publishedDate | date:'medium' }}</div>
+              </div>
+              <div class="song-actions">
+                <button class="btn-edit" (click)="editNews(item)">Edit</button>
+                <button class="btn-delete" (click)="deleteNews(item.id!)">Delete</button>
+              </div>
             </div>
           </div>
         </div>
@@ -915,7 +958,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
   `]
 })
 export class AdminDashboardComponent implements OnInit {
-  tab: 'songs' | 'lyrics' | 'messages' | 'content' | 'artist' = 'songs';
+  tab: 'songs' | 'lyrics' | 'messages' | 'content' | 'artist' | 'news' = 'songs';
 
   songs: Song[] = [];
   songsLoading = false;
@@ -1465,5 +1508,62 @@ export class AdminDashboardComponent implements OnInit {
           setTimeout(() => this.artistStatus = '', 4000);
         }
       });
+  }
+
+  // ── NEWS LOGIC ──────────────────────────────────────────────────────────
+  newsList: News[] = [];
+  newsLoading = false;
+  newsError = '';
+  newNews: News | null = null;
+
+  switchToNews() {
+    this.tab = 'news';
+    if (this.newsList.length === 0) this.loadNews();
+  }
+
+  loadNews() {
+    this.newsLoading = true;
+    this.newsError = '';
+    this.http.get<News[]>(`${API_BASE}/api/news`).subscribe({
+      next: data => {
+        this.newsList = data;
+        this.newsLoading = false;
+      },
+      error: () => {
+        this.newsError = 'Failed to load news';
+        this.newsLoading = false;
+      }
+    });
+  }
+
+  startNewNews() {
+    this.newNews = { title: '', content: '', imageUrl: '' };
+  }
+
+  editNews(item: News) {
+    this.newNews = { ...item };
+  }
+
+  saveNewNews() {
+    if (!this.newNews) return;
+    const req = this.newNews.id 
+      ? this.http.put(`${API_BASE}/api/news/${this.newNews.id}`, this.newNews, { headers: this.headers })
+      : this.http.post(`${API_BASE}/api/news`, this.newNews, { headers: this.headers });
+      
+    req.subscribe({
+      next: () => {
+        this.newNews = null;
+        this.loadNews();
+      },
+      error: () => alert('Failed to save news article')
+    });
+  }
+
+  deleteNews(id: number) {
+    if (!confirm('Delete this article?')) return;
+    this.http.delete(`${API_BASE}/api/news/${id}`, { headers: this.headers }).subscribe({
+      next: () => this.loadNews(),
+      error: () => alert('Failed to delete article')
+    });
   }
 }

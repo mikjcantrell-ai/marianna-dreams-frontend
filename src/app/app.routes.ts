@@ -18,6 +18,11 @@ export const routes: Routes = [
     title: 'Lyrics | Marianna Dreams'
   },
   {
+    path: 'news',
+    loadComponent: () => import('./features/news/news.component').then(m => m.NewsComponent),
+    title: 'News | Marianna Dreams'
+  },
+  {
     path: 'about',
     loadComponent: () => import('./features/about/about.component').then(m => m.AboutComponent),
     title: 'Our Story | Marianna Dreams'
