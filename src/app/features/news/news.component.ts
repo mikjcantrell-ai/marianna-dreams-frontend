@@ -69,10 +69,11 @@ interface News {
       font-weight: 300;
       letter-spacing: -0.02em;
       margin-bottom: 0.5rem;
+      color: var(--text-dark, #2a2017);
     }
 
     .subtitle {
-      color: rgba(255, 255, 255, 0.6);
+      color: var(--text-light, rgba(74,56,40,0.7));
       font-size: 1.125rem;
       font-weight: 300;
     }
@@ -84,16 +85,18 @@ interface News {
     }
 
     .news-card {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid rgba(255, 255, 255, 0.05);
+      background: rgba(255, 255, 255, 0.6);
+      border: 1px solid rgba(74, 56, 40, 0.1);
       border-radius: 12px;
       overflow: hidden;
-      transition: transform 0.3s ease, border-color 0.3s ease;
+      transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03);
     }
 
     .news-card:hover {
-      transform: translateY(-2px);
-      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-4px);
+      border-color: rgba(212, 134, 58, 0.3);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.06);
     }
 
     .news-image {
@@ -122,21 +125,23 @@ interface News {
     }
 
     .news-date {
-      color: rgba(255, 255, 255, 0.5);
+      color: var(--amber, #d4863a);
       font-size: 0.875rem;
+      font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
     .news-title {
       font-size: 2rem;
-      font-weight: 400;
+      font-weight: 600;
       margin-bottom: 1.5rem;
       line-height: 1.2;
+      color: var(--text-dark, #2a2017);
     }
 
     .news-body {
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-dark, rgba(42, 32, 23, 0.85));
       font-size: 1.125rem;
       line-height: 1.7;
       white-space: pre-line;
@@ -145,14 +150,14 @@ interface News {
     .loading-state, .error-state, .empty-state {
       text-align: center;
       padding: 4rem 0;
-      color: rgba(255, 255, 255, 0.6);
+      color: var(--text-light, rgba(74,56,40,0.6));
     }
 
     .spinner {
       width: 40px;
       height: 40px;
-      border: 3px solid rgba(255, 255, 255, 0.1);
-      border-top-color: #fff;
+      border: 3px solid rgba(212, 134, 58, 0.2);
+      border-top-color: var(--amber, #d4863a);
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin: 0 auto;
