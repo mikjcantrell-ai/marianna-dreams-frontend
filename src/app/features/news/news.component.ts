@@ -178,7 +178,7 @@ export class NewsComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
-    this.http.get<News[]>(`${API_BASE}/news`).subscribe({
+    this.http.get<News[]>(`${API_BASE}/api/news`).subscribe({
       next: (data) => {
         this.news = data;
         this.loading = false;
