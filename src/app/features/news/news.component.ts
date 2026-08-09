@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { API_BASE } from '../../core/config/api.config';
 
 interface News {
@@ -9,6 +10,7 @@ interface News {
   content: string;
   imageUrl: string;
   publishedDate: string;
+  safeContent?: SafeHtml;
 }
 
 @Component({
@@ -40,7 +42,7 @@ interface News {
               <span class="news-date">{{ item.publishedDate | date:'MMMM d, yyyy' }}</span>
             </div>
             <h2 class="news-title">{{ item.title }}</h2>
-            <div class="news-body">{{ item.content }}</div>
+            <div class="news-body" [innerHTML]="item.safeContent"></div>
           </div>
         </article>
 
@@ -175,12 +177,15 @@ export class NewsComponent implements OnInit {
   loading = true;
   error = '';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     this.http.get<News[]>(`${API_BASE}/api/news`).subscribe({
       next: (data) => {
-        this.news = data;
+        this.news = data.map(item => ({
+          ...item,
+          safeContent: this.sanitizer.bypassSecurityTrustHtml(item.content)
+        }));
         this.loading = false;
       },
       error: (err) => {
