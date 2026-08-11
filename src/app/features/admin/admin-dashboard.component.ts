@@ -1568,7 +1568,7 @@ export class AdminDashboardComponent implements OnInit {
   bumpNews(item: News) {
     if (!item.id) return;
     const updated = { ...item, publishedDate: new Date().toISOString() };
-    this.http.put(`${API_BASE}/api/news/${item.id}`, updated).subscribe({
+    this.http.put(`${API_BASE}/api/news/${item.id}`, updated, { headers: this.headers }).subscribe({
       next: () => this.loadNews(),
       error: (err) => console.error('Failed to bump news:', err)
     });
