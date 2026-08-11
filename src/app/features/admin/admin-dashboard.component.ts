@@ -1550,7 +1550,12 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   copyNews(item: News) {
-    this.newNews = { ...item, id: undefined, title: item.title + ' (Copy)' };
+    this.newNews = { 
+      ...item, 
+      id: undefined, 
+      title: item.title + ' (Copy)',
+      publishedDate: new Date().toISOString()
+    };
     // Scroll to the top of the page so the user sees the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
