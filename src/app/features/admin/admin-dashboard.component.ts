@@ -469,6 +469,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                 <div class="song-meta">{{ item.publishedDate | date:'medium' }}</div>
               </div>
               <div class="song-actions">
+                <button class="btn-bump-sm" (click)="bumpNews(item)">Bump</button>
                 <button class="btn-copy-sm" (click)="copyNews(item)">Copy</button>
                 <button class="btn-edit-sm" (click)="editNews(item)">Edit</button>
                 <button class="btn-danger-sm" (click)="deleteNews(item.id!)">Delete</button>
@@ -586,6 +587,10 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
     .btn-copy-sm {
       padding: 5px 12px; background: rgba(46, 204, 113, 0.1); color: #2ecc71;
       border: 1px solid rgba(46, 204, 113, 0.3); border-radius: 3px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+    }
+    .btn-bump-sm {
+      padding: 5px 12px; background: rgba(52, 152, 219, 0.1); color: #2980b9;
+      border: 1px solid rgba(52, 152, 219, 0.3); border-radius: 3px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
     }
 
     /* ── Inline form ─────────────────────────────────────────────────────── */
@@ -1558,6 +1563,15 @@ export class AdminDashboardComponent implements OnInit {
     };
     // Scroll to the top of the page so the user sees the form
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  bumpNews(item: News) {
+    if (!item.id) return;
+    const updated = { ...item, publishedDate: new Date().toISOString() };
+    this.http.put(`${API_BASE}/api/news/${item.id}`, updated).subscribe({
+      next: () => this.loadNews(),
+      error: (err) => console.error('Failed to bump news:', err)
+    });
   }
 
   saveNewNews() {
