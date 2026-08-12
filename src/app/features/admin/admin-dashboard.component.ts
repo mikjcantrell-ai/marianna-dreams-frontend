@@ -1023,6 +1023,10 @@ export class AdminDashboardComponent implements OnInit {
   newSong: Song | null = null;
   songSaveMsg: Record<number, string> = {};
 
+  // Image Upload State
+  isDragOver = false;
+  uploadingSongId: number | 'new' | null = null;
+
   lyrics: Lyric[] = [];
   lyricsLoading = false;
   lyricsError   = '';
@@ -1686,8 +1690,11 @@ export class AdminDashboardComponent implements OnInit {
     const isNew = !target.id;
     this.uploadingSongId = isNew ? 'new' : target.id;
 
+    const creds = sessionStorage.getItem('md_admin_creds') ?? '';
+    const uploadHeaders = new HttpHeaders({ Authorization: `Basic ${creds}` }); // No Content-Type, letting the browser set multipart/form-data
+
     // Use regular POST since it accepts multipart/form-data
-    this.http.post<any>(`${API_BASE}/api/admin/upload`, formData, { headers: this.headers }).subscribe({
+    this.http.post<any>(`${API_BASE}/api/admin/upload`, formData, { headers: uploadHeaders }).subscribe({
       next: (res) => {
         target.imageUrl = `${API_BASE}${res.url}`;
         this.uploadingSongId = null;
