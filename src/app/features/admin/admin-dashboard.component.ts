@@ -80,6 +80,16 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
           <div class="inline-form" *ngIf="newSong">
             <h3>New Song</h3>
             <div class="form-grid">
+              <label class="full">Cover Art
+                <div class="image-upload-zone" [class.dragover]="isDragOver" 
+                     (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" 
+                     (drop)="onDrop($event, newSong)" (click)="fileInputNew.click()">
+                  <img *ngIf="newSong.imageUrl" [src]="newSong.imageUrl" class="preview-img"/>
+                  <span *ngIf="!newSong.imageUrl" class="upload-hint">Drag & Drop Cover Art or Click to Upload</span>
+                  <input type="file" #fileInputNew hidden (change)="onFileSelected($event, newSong)" accept="image/*"/>
+                  <div *ngIf="uploadingSongId === 'new'" class="upload-overlay">Uploading...</div>
+                </div>
+              </label>
               <label>Title *<input [(ngModel)]="newSong.title" placeholder="Song title" /></label>
               <label>Genre<input [(ngModel)]="newSong.genre" placeholder="Roots · Folk · Country" /></label>
               <label>Release Year<input type="number" [(ngModel)]="newSong.releaseYear" /></label>
@@ -116,6 +126,16 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
 
               <div class="song-edit-form" *ngIf="editingSongId === song.id">
                 <div class="form-grid">
+                  <label class="full">Cover Art
+                    <div class="image-upload-zone" [class.dragover]="isDragOver" 
+                         (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" 
+                         (drop)="onDrop($event, song)" (click)="fileInputEdit.click()">
+                      <img *ngIf="song.imageUrl" [src]="song.imageUrl" class="preview-img"/>
+                      <span *ngIf="!song.imageUrl" class="upload-hint">Drag & Drop Cover Art or Click to Upload</span>
+                      <input type="file" #fileInputEdit hidden (change)="onFileSelected($event, song)" accept="image/*"/>
+                      <div *ngIf="uploadingSongId === song.id" class="upload-overlay">Uploading...</div>
+                    </div>
+                  </label>
                   <label>Title *<input [(ngModel)]="song.title" /></label>
                   <label>Genre<input [(ngModel)]="song.genre" /></label>
                   <label>Release Year<input type="number" [(ngModel)]="song.releaseYear" /></label>
@@ -591,6 +611,32 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
     .btn-bump-sm {
       padding: 5px 12px; background: rgba(52, 152, 219, 0.1); color: #2980b9;
       border: 1px solid rgba(52, 152, 219, 0.3); border-radius: 3px; font-size: 0.75rem; font-weight: 700; cursor: pointer;
+    }
+
+    /* ── Image Upload Zone ────────────────────────────────────────────────── */
+    .image-upload-zone {
+      position: relative; width: 100%; min-height: 120px;
+      border: 2px dashed rgba(200, 180, 150, 0.5);
+      border-radius: 6px; display: flex; align-items: center; justify-content: center;
+      background: rgba(255,255,255, 0.3);
+      cursor: pointer; transition: all 0.2s ease;
+      overflow: hidden; margin-top: 8px;
+    }
+    .image-upload-zone:hover, .image-upload-zone.dragover {
+      border-color: var(--amber); background: rgba(255,255,255, 0.6);
+    }
+    .preview-img {
+      width: 100%; height: 100%; max-height: 200px;
+      object-fit: contain; border-radius: 4px;
+    }
+    .upload-hint {
+      font-size: 0.85rem; color: rgba(100, 90, 80, 0.6);
+      pointer-events: none;
+    }
+    .upload-overlay {
+      position: absolute; inset: 0; background: rgba(0,0,0,0.6);
+      color: #fff; display: flex; align-items: center; justify-content: center;
+      font-weight: 600; font-size: 0.9rem;
     }
 
     /* ── Inline form ─────────────────────────────────────────────────────── */
@@ -1594,6 +1640,66 @@ export class AdminDashboardComponent implements OnInit {
     this.http.delete(`${API_BASE}/api/news/${id}`, { headers: this.headers }).subscribe({
       next: () => this.loadNews(),
       error: () => alert('Failed to delete article')
+    });
+  }
+
+  // --- Image Upload Handlers ---
+  
+  onDragOver(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = true;
+  }
+
+  onDragLeave(event: DragEvent) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+  }
+
+  onDrop(event: DragEvent, target: Song | any) {
+    event.preventDefault();
+    event.stopPropagation();
+    this.isDragOver = false;
+    
+    if (event.dataTransfer && event.dataTransfer.files.length > 0) {
+      this.uploadFile(event.dataTransfer.files[0], target);
+    }
+  }
+
+  onFileSelected(event: any, target: Song | any) {
+    const file = event.target.files[0];
+    if (file) {
+      this.uploadFile(file, target);
+    }
+  }
+
+  private uploadFile(file: File, target: Song | any) {
+    if (!file.type.startsWith('image/')) {
+      alert('Please select an image file.');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const isNew = !target.id;
+    this.uploadingSongId = isNew ? 'new' : target.id;
+
+    // Use regular POST since it accepts multipart/form-data
+    this.http.post<any>(`${API_BASE}/api/admin/upload`, formData, { headers: this.headers }).subscribe({
+      next: (res) => {
+        target.imageUrl = `${API_BASE}${res.url}`;
+        this.uploadingSongId = null;
+        if (!isNew) {
+           this.updateSong(target);
+        }
+      },
+      error: (err) => {
+        console.error('Upload failed:', err);
+        alert('Upload failed. Check console for details.');
+        this.uploadingSongId = null;
+      }
     });
   }
 }

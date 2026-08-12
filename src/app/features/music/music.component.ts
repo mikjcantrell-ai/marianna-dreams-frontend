@@ -72,10 +72,10 @@ import { API_BASE } from '../../core/config/api.config';
             <!-- Left: Artwork + number -->
             <div class="song-left">
               <span class="song-num">{{ formatNum(song.displayOrder) }}</span>
-              <div class="song-art" [class.placeholder]="!song.embedUrl">
-                <img *ngIf="song.embedUrl" src="assets/images/album_art.png"
+              <div class="song-art" [class.placeholder]="!song.imageUrl && !song.embedUrl">
+                <img *ngIf="song.imageUrl || song.embedUrl" [src]="song.imageUrl || 'assets/images/album_art.png'"
                      [alt]="song.title + ' artwork'" />
-                <span *ngIf="!song.embedUrl" class="placeholder-emoji">{{ icons[i % 3] }}</span>
+                <span *ngIf="!song.imageUrl && !song.embedUrl" class="placeholder-emoji">{{ icons[i % 3] }}</span>
               </div>
             </div>
 
