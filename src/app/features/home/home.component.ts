@@ -89,7 +89,7 @@ import { API_BASE } from '../../core/config/api.config';
                 <div class="placeholder-icon">{{ placeholderIcons[i % 3] }}</div>
                 <div class="coming-soon-badge">Coming Soon</div>
               </ng-container>
-              <img *ngIf="song.embedUrl" src="assets/images/album_art.png"
+              <img *ngIf="song.embedUrl" [src]="song.imageUrl || 'assets/images/album_art.png'"
                    [alt]="song.title + ' album art'" />
               <div class="track-number-badge">{{ formatTrackNumber(song.displayOrder) }}</div>
             </div>

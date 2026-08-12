@@ -42,7 +42,7 @@ import { SeoService } from '../../core/services/seo.service';
 
           <!-- Sidebar -->
           <aside class="lyrics-sidebar">
-            <img src="assets/images/album_art.png" [alt]="song.title + ' artwork'" class="sidebar-art" />
+            <img [src]="song.imageUrl || 'assets/images/album_art.png'" [alt]="song.title + ' artwork'" class="sidebar-art" />
             <div class="sidebar-card">
               <h3 class="sidebar-title">{{ song.title }}</h3>
               <p class="sidebar-artist">Marianna Dreams</p>
