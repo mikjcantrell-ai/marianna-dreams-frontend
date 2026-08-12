@@ -1704,8 +1704,9 @@ export class AdminDashboardComponent implements OnInit {
       },
       error: (err) => {
         console.error('Upload failed:', err);
-        alert('Upload failed. Check console for details.');
         this.uploadingSongId = null;
+        const msg = err.error?.message || err.statusText || 'Unknown error';
+        alert(`Upload failed: [${err.status}] ${msg}. Check console for details.`);
       }
     });
   }
