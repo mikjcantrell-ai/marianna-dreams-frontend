@@ -159,7 +159,7 @@ export class AdminLoginComponent {
     const creds   = btoa(`${this.username}:${this.password}`);
     const headers = new HttpHeaders({ Authorization: `Basic ${creds}` });
 
-    this.http.get(`${API_BASE}/api/songs`, { headers }).subscribe({
+    this.http.get(`${API_BASE}/api/admin/verify`, { headers }).subscribe({
       next: () => {
         sessionStorage.setItem('md_admin_creds', creds);
         this.router.navigate(['/admin']);
