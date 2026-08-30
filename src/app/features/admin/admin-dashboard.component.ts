@@ -469,6 +469,16 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
           <div class="inline-form" *ngIf="newNews">
             <h3>{{ newNews.id ? 'Edit' : 'New' }} Article</h3>
             <div class="form-grid">
+              <label class="full">Image
+                <div class="image-upload-zone" [class.dragover]="isDragOver" 
+                     (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" 
+                     (drop)="onDrop($event, newNews, 'news')" (click)="fileInputNews.click()">
+                  <img *ngIf="newNews.imageUrl" [src]="newNews.imageUrl" class="preview-img"/>
+                  <span *ngIf="!newNews.imageUrl" class="upload-hint">Drag & Drop Image or Click to Upload</span>
+                  <input type="file" #fileInputNews hidden (change)="onFileSelected($event, newNews, 'news')" accept="image/*"/>
+                  <div *ngIf="uploadingSongId === (newNews.id ? newNews.id : 'new')" class="upload-overlay">Uploading...</div>
+                </div>
+              </label>
               <label>Title *<input [(ngModel)]="newNews.title" placeholder="Article Title" /></label>
               <label>Image URL<input [(ngModel)]="newNews.imageUrl" placeholder="https://..." /></label>
               <label class="full">Content *<textarea [(ngModel)]="newNews.content" rows="6"></textarea></label>
@@ -1661,24 +1671,24 @@ export class AdminDashboardComponent implements OnInit {
     this.isDragOver = false;
   }
 
-  onDrop(event: DragEvent, target: Song | any) {
+  onDrop(event: DragEvent, target: Song | any, targetType: 'song' | 'news' = 'song') {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = false;
     
     if (event.dataTransfer && event.dataTransfer.files.length > 0) {
-      this.uploadFile(event.dataTransfer.files[0], target);
+      this.uploadFile(event.dataTransfer.files[0], target, targetType);
     }
   }
 
-  onFileSelected(event: any, target: Song | any) {
+  onFileSelected(event: any, target: Song | any, targetType: 'song' | 'news' = 'song') {
     const file = event.target.files[0];
     if (file) {
-      this.uploadFile(file, target);
+      this.uploadFile(file, target, targetType);
     }
   }
 
-  private uploadFile(file: File, target: Song | any) {
+  private uploadFile(file: File, target: Song | any, targetType: 'song' | 'news' = 'song') {
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file.');
       return;
@@ -1698,7 +1708,7 @@ export class AdminDashboardComponent implements OnInit {
       next: (res) => {
         target.imageUrl = `${API_BASE}${res.url}`;
         this.uploadingSongId = null;
-        if (!isNew) {
+        if (!isNew && targetType === 'song') {
            this.updateSong(target);
         }
       },
