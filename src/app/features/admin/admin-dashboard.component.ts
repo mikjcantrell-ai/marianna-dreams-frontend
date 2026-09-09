@@ -92,6 +92,16 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
               <label>Title *<input [(ngModel)]="newAlbum.title" placeholder="Album title" /></label>
               <label>Release Year<input type="number" [(ngModel)]="newAlbum.releaseYear" /></label>
               <label>Spotify URL<input [(ngModel)]="newAlbum.spotifyUrl" placeholder="https://open.spotify.com/album/…" /></label>
+              <label class="full">Cover Art
+                <div class="image-upload-zone" [class.dragover]="isDragOver" 
+                     (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" 
+                     (drop)="onDrop($event, newAlbum, 'album')" (click)="fileInputNewAlbum.click()">
+                  <img *ngIf="newAlbum.imageUrl" [src]="newAlbum.imageUrl" class="preview-img"/>
+                  <span *ngIf="!newAlbum.imageUrl" class="upload-hint">Drag & Drop Cover Art or Click to Upload</span>
+                  <input type="file" #fileInputNewAlbum hidden (change)="onFileSelected($event, newAlbum, 'album')" accept="image/*"/>
+                  <div *ngIf="uploadingSongId === 'new'" class="upload-overlay">Uploading...</div>
+                </div>
+              </label>
               <label>Image URL<input [(ngModel)]="newAlbum.imageUrl" /></label>
               <label class="full">Description<textarea [(ngModel)]="newAlbum.description" rows="2"></textarea></label>
               <label>Display Order<input type="number" [(ngModel)]="newAlbum.displayOrder" /></label>
@@ -120,6 +130,16 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                   <label>Title *<input [(ngModel)]="album.title" /></label>
                   <label>Release Year<input type="number" [(ngModel)]="album.releaseYear" /></label>
                   <label>Spotify URL<input [(ngModel)]="album.spotifyUrl" /></label>
+                  <label class="full">Cover Art
+                    <div class="image-upload-zone" [class.dragover]="isDragOver" 
+                         (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" 
+                         (drop)="onDrop($event, album, 'album')" (click)="fileInputEditAlbum.click()">
+                      <img *ngIf="album.imageUrl" [src]="album.imageUrl" class="preview-img"/>
+                      <span *ngIf="!album.imageUrl" class="upload-hint">Drag & Drop Cover Art or Click to Upload</span>
+                      <input type="file" #fileInputEditAlbum hidden (change)="onFileSelected($event, album, 'album')" accept="image/*"/>
+                      <div *ngIf="uploadingSongId === album.id" class="upload-overlay">Uploading...</div>
+                    </div>
+                  </label>
                   <label>Image URL<input [(ngModel)]="album.imageUrl" /></label>
                   <label class="full">Description<textarea [(ngModel)]="album.description" rows="2"></textarea></label>
                   <label>Display Order<input type="number" [(ngModel)]="album.displayOrder" /></label>
@@ -1811,7 +1831,7 @@ export class AdminDashboardComponent implements OnInit {
     this.isDragOver = false;
   }
 
-  onDrop(event: DragEvent, target: Song | any, targetType: 'song' | 'news' = 'song') {
+  onDrop(event: DragEvent, target: Song | any, targetType: 'song' | 'news' | 'album' = 'song') {
     event.preventDefault();
     event.stopPropagation();
     this.isDragOver = false;
@@ -1821,14 +1841,14 @@ export class AdminDashboardComponent implements OnInit {
     }
   }
 
-  onFileSelected(event: any, target: Song | any, targetType: 'song' | 'news' = 'song') {
+  onFileSelected(event: any, target: Song | any, targetType: 'song' | 'news' | 'album' = 'song') {
     const file = event.target.files[0];
     if (file) {
       this.uploadFile(file, target, targetType);
     }
   }
 
-  private uploadFile(file: File, target: Song | any, targetType: 'song' | 'news' = 'song') {
+  private uploadFile(file: File, target: Song | any, targetType: 'song' | 'news' | 'album' = 'song') {
     if (!file.type.startsWith('image/')) {
       alert('Please select an image file.');
       return;
@@ -1848,8 +1868,9 @@ export class AdminDashboardComponent implements OnInit {
       next: (res) => {
         target.imageUrl = `${API_BASE}${res.url}`;
         this.uploadingSongId = null;
-        if (!isNew && targetType === 'song') {
-           this.updateSong(target);
+        if (!isNew) {
+          if (targetType === 'song') this.updateSong(target);
+          if (targetType === 'album') this.updateAlbum(target);
         }
       },
       error: (err) => {
