@@ -3,6 +3,18 @@
  * These are the canonical data contracts between the Angular SPA and the API.
  */
 
+// ── Album (mirrors com.mariannadreams.model.Album) ───────────────────────────
+export interface Album {
+  id: number;
+  title: string;
+  releaseYear?: number;
+  imageUrl?: string;
+  spotifyUrl?: string;
+  description?: string;
+  displayOrder: number;
+  songs?: Song[];
+}
+
 // ── Song (mirrors com.mariannadreams.model.Song) ─────────────────────────────
 export interface Song {
   id: number;
@@ -16,6 +28,7 @@ export interface Song {
   featuredStatus: boolean;
   displayOrder: number;
   description?: string;
+  album?: Album;
 }
 
 // ── Lyric (mirrors com.mariannadreams.model.Lyric) ───────────────────────────

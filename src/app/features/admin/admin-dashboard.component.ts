@@ -5,10 +5,15 @@ import { Router, RouterLink } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { API_BASE } from '../../core/config/api.config';
 
+interface Album {
+  id?: number; title: string; releaseYear?: number; imageUrl?: string; spotifyUrl?: string; description?: string; displayOrder: number;
+}
+
 interface Song {
   id?: number; title: string; spotifyUrl: string; embedUrl: string;
   imageUrl: string; genre: string; releaseYear: number;
   aiToolsUsed: string; featuredStatus: boolean; displayOrder: number; description: string;
+  album?: { id: number, title?: string };
 }
 interface Lyric {
   id?: number; sectionLabel: string; sectionType: string; content: string; displayOrder: number;
@@ -46,6 +51,9 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
 
       <!-- Tabs -->
       <nav class="admin-tabs">
+        <button class="admin-tab" [class.active]="tab==='albums'" (click)="switchToAlbums()" id="albums-tab">
+          💿 Albums
+        </button>
         <button class="admin-tab" [class.active]="tab==='songs'" (click)="tab='songs'" id="songs-tab">
           🎵 Songs
         </button>
@@ -69,6 +77,62 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
 
       <div class="admin-body">
 
+
+        <!-- ── ALBUMS TAB ─────────────────────────────────────────────────── -->
+        <div *ngIf="tab==='albums'">
+          <div class="section-head">
+            <h2>Albums</h2>
+            <button class="btn-add" (click)="startNewAlbum()" id="add-album-btn">+ Add Album</button>
+          </div>
+
+          <!-- New album form -->
+          <div class="inline-form" *ngIf="newAlbum">
+            <h3>New Album</h3>
+            <div class="form-grid">
+              <label>Title *<input [(ngModel)]="newAlbum.title" placeholder="Album title" /></label>
+              <label>Release Year<input type="number" [(ngModel)]="newAlbum.releaseYear" /></label>
+              <label>Spotify URL<input [(ngModel)]="newAlbum.spotifyUrl" placeholder="https://open.spotify.com/album/…" /></label>
+              <label>Image URL<input [(ngModel)]="newAlbum.imageUrl" /></label>
+              <label class="full">Description<textarea [(ngModel)]="newAlbum.description" rows="2"></textarea></label>
+              <label>Display Order<input type="number" [(ngModel)]="newAlbum.displayOrder" /></label>
+            </div>
+            <div class="form-actions">
+              <button class="btn-save" (click)="saveNewAlbum()">Save Album</button>
+              <button class="btn-cancel" (click)="newAlbum=null">Cancel</button>
+            </div>
+          </div>
+
+          <div class="loading" *ngIf="albumsLoading">Loading…</div>
+          <div class="error-msg" *ngIf="albumsError">{{ albumsError }}</div>
+
+          <!-- Albums list -->
+          <div class="songs-list" *ngIf="!albumsLoading">
+            <div class="song-row" *ngFor="let album of albums">
+              <div class="song-row-header" (click)="toggleAlbumEdit(album)">
+                <span class="song-order">{{ album.displayOrder }}</span>
+                <span class="song-title">{{ album.title }}</span>
+                <span class="song-year">{{ album.releaseYear }}</span>
+                <button class="btn-edit-sm">{{ editingAlbumId === album.id ? '▲ Close' : '✏ Edit' }}</button>
+              </div>
+
+              <div class="song-edit-form" *ngIf="editingAlbumId === album.id">
+                <div class="form-grid">
+                  <label>Title *<input [(ngModel)]="album.title" /></label>
+                  <label>Release Year<input type="number" [(ngModel)]="album.releaseYear" /></label>
+                  <label>Spotify URL<input [(ngModel)]="album.spotifyUrl" /></label>
+                  <label>Image URL<input [(ngModel)]="album.imageUrl" /></label>
+                  <label class="full">Description<textarea [(ngModel)]="album.description" rows="2"></textarea></label>
+                  <label>Display Order<input type="number" [(ngModel)]="album.displayOrder" /></label>
+                </div>
+                <div class="form-actions">
+                  <button class="btn-save" (click)="updateAlbum(album)">Save</button>
+                  <button class="btn-delete" (click)="deleteAlbum(album.id!)">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ── SONGS TAB ─────────────────────────────────────────────────── -->
         <div *ngIf="tab==='songs'">
           <div class="section-head">
@@ -91,6 +155,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                 </div>
               </label>
               <label>Title *<input [(ngModel)]="newSong.title" placeholder="Song title" /></label>
+              <label>Album<select [ngModel]="newSong.album?.id" (ngModelChange)="newSong.album = {id: $event}"><option [ngValue]="undefined">None</option><option *ngFor="let a of albums" [ngValue]="a.id">{{ a.title }}</option></select></label>
               <label>Genre<input [(ngModel)]="newSong.genre" placeholder="Roots · Folk · Country" /></label>
               <label>Release Year<input type="number" [(ngModel)]="newSong.releaseYear" /></label>
               <label>Spotify URL<input [(ngModel)]="newSong.spotifyUrl" placeholder="https://open.spotify.com/track/…" /></label>
@@ -137,6 +202,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                     </div>
                   </label>
                   <label>Title *<input [(ngModel)]="song.title" /></label>
+                  <label>Album<select [ngModel]="song.album?.id" (ngModelChange)="song.album = {id: $event}"><option [ngValue]="undefined">None</option><option *ngFor="let a of albums" [ngValue]="a.id">{{ a.title }}</option></select></label>
                   <label>Genre<input [(ngModel)]="song.genre" /></label>
                   <label>Release Year<input type="number" [(ngModel)]="song.releaseYear" /></label>
                   <label>Spotify URL<input [(ngModel)]="song.spotifyUrl" /></label>
@@ -480,6 +546,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                 </div>
               </label>
               <label>Title *<input [(ngModel)]="newNews.title" placeholder="Article Title" /></label>
+              <label>Publish Date<input type="datetime-local" [(ngModel)]="newNews.publishedDate" /></label>
               <label>Image URL<input [(ngModel)]="newNews.imageUrl" placeholder="https://..." /></label>
               <label class="full">Content *<textarea [(ngModel)]="newNews.content" rows="6"></textarea></label>
             </div>
@@ -1024,7 +1091,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
   `]
 })
 export class AdminDashboardComponent implements OnInit {
-  tab: 'songs' | 'lyrics' | 'messages' | 'content' | 'artist' | 'news' = 'songs';
+  tab: 'albums' | 'songs' | 'lyrics' | 'messages' | 'content' | 'artist' | 'news' = 'songs';
 
   songs: Song[] = [];
   songsLoading = false;
@@ -1072,6 +1139,7 @@ export class AdminDashboardComponent implements OnInit {
   constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
+    this.loadAlbums();
     this.loadSongs();
     this.loadUnreadCount();
   }
@@ -1086,6 +1154,68 @@ export class AdminDashboardComponent implements OnInit {
   logout(): void {
     sessionStorage.removeItem('md_admin_creds');
     this.router.navigate(['/admin/login']);
+  }
+
+
+  // ── Albums state ──────────────────────────────────────────────────────────
+  albums: Album[] = [];
+  albumsLoading = false;
+  albumsError = '';
+  newAlbum: Album | null = null;
+  editingAlbumId: number | null = null;
+
+  switchToAlbums(): void {
+    this.tab = 'albums';
+    this.newAlbum = null;
+    this.editingAlbumId = null;
+    this.loadAlbums();
+  }
+
+  loadAlbums(): void {
+    this.albumsLoading = true;
+    this.albumsError = '';
+    this.http.get<Album[]>(`${API_BASE}/api/albums`).subscribe({
+      next: a => { this.albums = a; this.albumsLoading = false; },
+      error: () => { this.albumsError = 'Failed to load albums.'; this.albumsLoading = false; }
+    });
+  }
+
+  startNewAlbum(): void {
+    this.newAlbum = { title: '', releaseYear: 2026, imageUrl: '', spotifyUrl: '', description: '', displayOrder: this.albums.length + 1 };
+  }
+
+  saveNewAlbum(): void {
+    if (!this.newAlbum || !this.newAlbum.title) return;
+    this.http.post<Album>(`${API_BASE}/api/albums`, this.newAlbum, { headers: this.headers }).subscribe({
+      next: a => {
+        this.albums.push(a);
+        this.newAlbum = null;
+      },
+      error: () => alert('Failed to save album.')
+    });
+  }
+
+  toggleAlbumEdit(album: Album): void {
+    this.editingAlbumId = this.editingAlbumId === album.id ? null : album.id!;
+  }
+
+  updateAlbum(album: Album): void {
+    this.http.put<Album>(`${API_BASE}/api/albums/${album.id}`, album, { headers: this.headers }).subscribe({
+      next: () => {
+        this.editingAlbumId = null;
+      },
+      error: () => alert('Failed to update album.')
+    });
+  }
+
+  deleteAlbum(id: number): void {
+    if (!confirm('Are you sure you want to delete this album?')) return;
+    this.http.delete(`${API_BASE}/api/albums/${id}`, { headers: this.headers }).subscribe({
+      next: () => {
+        this.albums = this.albums.filter(a => a.id !== id);
+      },
+      error: () => alert('Failed to delete album.')
+    });
   }
 
   // ── Songs ─────────────────────────────────────────────────────────────────
@@ -1594,7 +1724,7 @@ export class AdminDashboardComponent implements OnInit {
   loadNews() {
     this.newsLoading = true;
     this.newsError = '';
-    this.http.get<News[]>(`${API_BASE}/api/news`).subscribe({
+    this.http.get<News[]>(`${API_BASE}/api/news/admin`, { headers: this.headers }).subscribe({
       next: data => {
         this.newsList = data;
         this.newsLoading = false;
@@ -1607,11 +1737,21 @@ export class AdminDashboardComponent implements OnInit {
   }
 
   startNewNews() {
-    this.newNews = { title: '', content: '', imageUrl: '' };
+    this.newNews = { title: '', content: '', imageUrl: '', publishedDate: this.formatDateForInput(new Date()) };
+  }
+
+  formatDateForInput(date: Date): string {
+    // Returns YYYY-MM-DDThh:mm format required by datetime-local
+    const tzOffset = date.getTimezoneOffset() * 60000; // offset in milliseconds
+    return (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 16);
   }
 
   editNews(item: News) {
-    this.newNews = { ...item };
+    let pd = item.publishedDate;
+    if (pd && pd.length > 16) {
+        pd = pd.slice(0, 16);
+    }
+    this.newNews = { ...item, publishedDate: pd };
   }
 
   copyNews(item: News) {
@@ -1619,7 +1759,7 @@ export class AdminDashboardComponent implements OnInit {
       ...item, 
       id: undefined, 
       title: item.title + ' (Copy)',
-      publishedDate: new Date().toISOString()
+      publishedDate: this.formatDateForInput(new Date())
     };
     // Scroll to the top of the page so the user sees the form
     window.scrollTo({ top: 0, behavior: 'smooth' });

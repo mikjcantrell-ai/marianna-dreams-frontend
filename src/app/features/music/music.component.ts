@@ -2,8 +2,8 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
-import { SongService } from '../../core/services/song.service';
-import { Song } from '../../core/models';
+import { AlbumService } from '../../core/services/album.service';
+import { Album, Song } from '../../core/models';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import { API_BASE } from '../../core/config/api.config';
 
@@ -24,104 +24,108 @@ import { API_BASE } from '../../core/config/api.config';
         </div>
       </div>
 
-      <!-- Album Banner -->
-      <div class="album-banner">
-        <div class="album-banner-inner container">
-          <div class="album-art-thumb">
-            <img src="assets/images/album_art.png" alt="Marianna Dreams self-titled debut album" />
-          </div>
-          <div class="album-info">
-            <span class="album-eyebrow">Self-Titled Debut Album</span>
-            <h2 class="album-name">Marianna Dreams</h2>
-            <div class="album-meta">
-              <span>2026</span>
-              <span class="meta-dot">&bull;</span>
-              <span>13 Tracks</span>
-              <span class="meta-dot">&bull;</span>
-              <span>Roots &middot; Folk &middot; Country &middot; Indie</span>
-            </div>
-          </div>
-          <a href="https://open.spotify.com/album/0BB8BawGzPa6yNdyf9vGBb"
-             target="_blank" rel="noopener"
-             class="album-spotify-btn"
-             id="album-spotify-link">
-            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-            Listen on Spotify
-          </a>
-          <!-- Artist website link (shown when set in admin) -->
-          <a *ngIf="artistWebsite"
-             [href]="artistWebsite"
-             target="_blank" rel="noopener"
-             class="album-website-btn"
-             id="artist-website-link">
-            🌐 Visit Website
-          </a>
-        </div>
+      <div class="loading-state" *ngIf="loading">
+        <div class="loading-dot" *ngFor="let d of [1,2,3]"></div>
       </div>
 
-      <!-- Songs -->
-      <div class="songs-section container">
-        <div class="loading-state" *ngIf="loading">
-          <div class="loading-dot" *ngFor="let d of [1,2,3]"></div>
-        </div>
-
-        <div class="songs-list" *ngIf="!loading">
-          <div class="song-row" *ngFor="let song of songs; let i = index"
-               [id]="'song-row-' + song.id">
-
-            <!-- Left: Artwork + number -->
-            <div class="song-left">
-              <span class="song-num">{{ formatNum(song.displayOrder) }}</span>
-              <div class="song-art" [class.placeholder]="!song.imageUrl && !song.embedUrl">
-                <img *ngIf="song.imageUrl || song.embedUrl" [src]="song.imageUrl || 'assets/images/album_art.png'"
-                     [alt]="song.title + ' artwork'" />
-                <span *ngIf="!song.imageUrl && !song.embedUrl" class="placeholder-emoji">{{ icons[i % 3] }}</span>
+      <div *ngIf="!loading">
+        <div class="album-group" *ngFor="let album of albums">
+          <!-- Album Banner -->
+          <div class="album-banner">
+            <div class="album-banner-inner container">
+              <div class="album-art-thumb">
+                <img [src]="album.imageUrl || 'assets/images/album_art.png'" [alt]="album.title" />
               </div>
-            </div>
-
-            <!-- Middle: Info -->
-            <div class="song-middle">
-              <h2 class="song-title">{{ song.title }}</h2>
-              <p class="song-genre">{{ song.genre }}</p>
-              <p class="song-desc" *ngIf="song.description">{{ song.description }}</p>
-              <div class="song-meta">
-                <span *ngIf="song.releaseYear">{{ song.releaseYear }}</span>
-                <span *ngIf="song.aiToolsUsed">{{ song.aiToolsUsed }}</span>
+              <div class="album-info">
+                <span class="album-eyebrow">Album</span>
+                <h2 class="album-name">{{ album.title }}</h2>
+                <div class="album-meta">
+                  <span *ngIf="album.releaseYear">{{ album.releaseYear }}</span>
+                  <span class="meta-dot" *ngIf="album.releaseYear">&bull;</span>
+                  <span>{{ album.songs?.length || 0 }} Tracks</span>
+                  <span class="meta-dot">&bull;</span>
+                  <span>{{ getAlbumGenres(album) }}</span>
+                </div>
               </div>
+              <a *ngIf="album.spotifyUrl" [href]="album.spotifyUrl"
+                 target="_blank" rel="noopener"
+                 class="album-spotify-btn"
+                 [id]="'album-spotify-link-' + album.id">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                Listen on Spotify
+              </a>
+              <!-- Artist website link (only on first album or globally) -->
+              <a *ngIf="artistWebsite && album === albums[0]"
+                 [href]="artistWebsite"
+                 target="_blank" rel="noopener"
+                 class="album-website-btn"
+                 id="artist-website-link">
+                🌐 Visit Website
+              </a>
             </div>
-
-            <!-- Right: Actions -->
-            <div class="song-right">
-              <ng-container *ngIf="song.embedUrl; else comingSoon">
-                <a [href]="song.spotifyUrl" target="_blank" rel="noopener"
-                   class="action-btn spotify" [id]="'spotify-' + song.id">
-                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
-                  Listen
-                </a>
-                <a [routerLink]="['/lyrics', song.id]"
-                   class="action-btn lyrics" [id]="'lyrics-' + song.id">
-                  Lyrics
-                </a>
-              </ng-container>
-              <ng-template #comingSoon>
-                <span class="coming-pill">In the studio…</span>
-              </ng-template>
-            </div>
-
           </div>
 
-          <!-- Spotify Embed for first song with embedUrl -->
-          <div class="embed-section" *ngIf="firstEmbedSong">
-            <h3 class="embed-title">Listen Now</h3>
-            <div class="spotify-embed-wrap">
-              <iframe [src]="safeEmbedUrl"
-                      width="100%" height="152"
-                      frameBorder="0"
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      [title]="firstEmbedSong.title + ' on Spotify'">
-              </iframe>
+          <!-- Songs -->
+          <div class="songs-section container">
+            <div class="songs-list">
+              <div class="song-row" *ngFor="let song of album.songs; let i = index"
+                   [id]="'song-row-' + song.id">
+
+                <!-- Left: Artwork + number -->
+                <div class="song-left">
+                  <span class="song-num">{{ formatNum(song.displayOrder) }}</span>
+                  <div class="song-art" [class.placeholder]="!song.imageUrl && !song.embedUrl">
+                    <img *ngIf="song.imageUrl || song.embedUrl" [src]="song.imageUrl || 'assets/images/album_art.png'"
+                         [alt]="song.title + ' artwork'" />
+                    <span *ngIf="!song.imageUrl && !song.embedUrl" class="placeholder-emoji">{{ icons[i % 3] }}</span>
+                  </div>
+                </div>
+
+                <!-- Middle: Info -->
+                <div class="song-middle">
+                  <h2 class="song-title">{{ song.title }}</h2>
+                  <p class="song-genre">{{ song.genre }}</p>
+                  <p class="song-desc" *ngIf="song.description">{{ song.description }}</p>
+                  <div class="song-meta">
+                    <span *ngIf="song.releaseYear">{{ song.releaseYear }}</span>
+                    <span *ngIf="song.aiToolsUsed">{{ song.aiToolsUsed }}</span>
+                  </div>
+                </div>
+
+                <!-- Right: Actions -->
+                <div class="song-right">
+                  <ng-container *ngIf="song.embedUrl; else comingSoon">
+                    <a [href]="song.spotifyUrl" target="_blank" rel="noopener"
+                       class="action-btn spotify" [id]="'spotify-' + song.id">
+                      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/></svg>
+                      Listen
+                    </a>
+                    <a [routerLink]="['/lyrics', song.id]"
+                       class="action-btn lyrics" [id]="'lyrics-' + song.id">
+                      Lyrics
+                    </a>
+                  </ng-container>
+                  <ng-template #comingSoon>
+                    <span class="coming-pill">In the studio…</span>
+                  </ng-template>
+                </div>
+
+              </div>
             </div>
+          </div>
+        </div>
+
+        <!-- Spotify Embed for first song with embedUrl -->
+        <div class="embed-section container" *ngIf="firstEmbedSong">
+          <h3 class="embed-title">Listen Now</h3>
+          <div class="spotify-embed-wrap">
+            <iframe [src]="safeEmbedUrl"
+                    width="100%" height="152"
+                    frameBorder="0"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    [title]="firstEmbedSong.title + ' on Spotify'">
+            </iframe>
           </div>
         </div>
       </div>
@@ -391,7 +395,7 @@ import { API_BASE } from '../../core/config/api.config';
   `]
 })
 export class MusicComponent implements OnInit {
-  songs: Song[] = [];
+  albums: Album[] = [];
   loading = true;
   icons = ['🌙', '🌾', '🍂'];
   firstEmbedSong: Song | null = null;
@@ -399,7 +403,7 @@ export class MusicComponent implements OnInit {
   artistWebsite = '';
 
   constructor(
-    private songService: SongService,
+    private albumService: AlbumService,
     private sanitizer: DomSanitizer,
     private http: HttpClient
   ) {}
@@ -411,10 +415,17 @@ export class MusicComponent implements OnInit {
       error: () => {}
     });
 
-    this.songService.getAllSongs().subscribe({
-      next: songs => {
-        this.songs = songs;
-        this.firstEmbedSong = songs.find(s => !!s.embedUrl) || null;
+    this.albumService.getAllAlbums().subscribe({
+      next: albums => {
+        this.albums = albums;
+        // Find the first song with an embed URL across all albums
+        for (const album of albums) {
+          if (album.songs) {
+            this.firstEmbedSong = album.songs.find(s => !!s.embedUrl) || null;
+            if (this.firstEmbedSong) break;
+          }
+        }
+        
         if (this.firstEmbedSong?.embedUrl) {
           this.safeEmbedUrl = this.sanitizer.bypassSecurityTrustResourceUrl(
             this.firstEmbedSong.embedUrl
@@ -424,6 +435,12 @@ export class MusicComponent implements OnInit {
       },
       error: () => { this.loading = false; }
     });
+  }
+
+  getAlbumGenres(album: Album): string {
+    if (!album.songs || album.songs.length === 0) return 'Various';
+    // Just return the genre of the first song as a representative genre for the album
+    return album.songs[0].genre || 'Various';
   }
 
   formatNum(n: number): string {
