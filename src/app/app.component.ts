@@ -1,5 +1,5 @@
 import { Component, OnInit, HostListener } from '@angular/core';
-import { RouterOutlet, RouterLink, RouterLinkActive } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { SeoService } from './core/services/seo.service';
 
@@ -14,7 +14,7 @@ import { SeoService } from './core/services/seo.service';
   imports: [RouterOutlet, RouterLink, RouterLinkActive, CommonModule],
   template: `
     <!-- ── Global Navigation Bar ──────────────────────────────────────────── -->
-    <nav class="navbar" [class.scrolled]="scrolled">
+    <nav class="navbar" [class.scrolled]="scrolled" *ngIf="!isAdminRoute()">
       <div class="navbar-inner">
 
         <!-- Brand / Logo -->
@@ -62,7 +62,7 @@ import { SeoService } from './core/services/seo.service';
     </main>
 
     <!-- ── Footer ─────────────────────────────────────────────────────────── -->
-    <footer class="footer">
+    <footer class="footer" *ngIf="!isAdminRoute()">
       <div class="footer-inner">
         <div class="footer-logo">
           <span class="brand-script">Marianna</span>
@@ -250,7 +250,11 @@ export class AppComponent implements OnInit {
   scrolled = false;
   menuOpen = false;
 
-  constructor(private seo: SeoService) {}
+  constructor(private seo: SeoService, private router: Router) {}
+
+  isAdminRoute(): boolean {
+    return this.router.url.startsWith('/admin');
+  }
 
   @HostListener('window:scroll')
   onScroll() {

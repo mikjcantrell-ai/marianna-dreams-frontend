@@ -182,7 +182,10 @@ export class NewsComponent implements OnInit {
   loading = true;
   error = '';
 
-  constructor(private http: HttpClient, private sanitizer: DomSanitizer) {}
+  constructor(
+    private http: HttpClient,
+    private sanitizer: DomSanitizer
+  ) {}
 
   ngOnInit(): void {
     this.http.get<News[]>(`${API_BASE}/api/news`).subscribe({

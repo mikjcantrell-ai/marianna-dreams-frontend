@@ -91,7 +91,12 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
             <div class="form-grid">
               <label>Title *<input [(ngModel)]="newAlbum.title" placeholder="Album title" /></label>
               <label>Release Year<input type="number" [(ngModel)]="newAlbum.releaseYear" /></label>
-              <label>Spotify URL<input [(ngModel)]="newAlbum.spotifyUrl" placeholder="https://open.spotify.com/album/…" /></label>
+              <label>Spotify URL
+                <div style="display: flex; gap: 8px;">
+                  <input [(ngModel)]="newAlbum.spotifyUrl" placeholder="https://open.spotify.com/album/…" style="flex: 1;" />
+                  <button class="btn-bump-sm" (click)="fetchSpotifyAlbum(newAlbum)" [disabled]="isFetchingSpotify" title="Fetch Metadata" style="height: 100%;">⬇ Fetch</button>
+                </div>
+              </label>
               <label class="full">Cover Art
                 <div class="image-upload-zone" [class.dragover]="isDragOver" 
                      (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" 
@@ -129,7 +134,14 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                 <div class="form-grid">
                   <label>Title *<input [(ngModel)]="album.title" /></label>
                   <label>Release Year<input type="number" [(ngModel)]="album.releaseYear" /></label>
-                  <label>Spotify URL<input [(ngModel)]="album.spotifyUrl" /></label>
+                  <label>Spotify URL
+                    <div style="display: flex; gap: 8px;">
+                      <input [(ngModel)]="album.spotifyUrl" style="flex: 1;" />
+                      <button class="btn-bump-sm" (click)="fetchSpotifyAlbum(album)" [disabled]="isFetchingSpotify" title="Fetch Metadata" style="height: 100%;">⬇ Fetch</button>
+                      <button class="btn-lyrics" (click)="importSpotifyTracks(album)" [disabled]="isFetchingSpotify" title="Import All Tracks" style="height: 100%;">Import Tracks</button>
+                      <button class="btn-copy-sm" (click)="refreshAlbumTracks(album)" [disabled]="isFetchingSpotify" title="Sync cover art and year to all existing tracks" style="height: 100%;">Sync Tracks</button>
+                    </div>
+                  </label>
                   <label class="full">Cover Art
                     <div class="image-upload-zone" [class.dragover]="isDragOver" 
                          (dragover)="onDragOver($event)" (dragleave)="onDragLeave($event)" 
@@ -178,7 +190,12 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
               <label>Album<select [ngModel]="newSong.album?.id" (ngModelChange)="newSong.album = {id: $event}"><option [ngValue]="undefined">None</option><option *ngFor="let a of albums" [ngValue]="a.id">{{ a.title }}</option></select></label>
               <label>Genre<input [(ngModel)]="newSong.genre" placeholder="Roots · Folk · Country" /></label>
               <label>Release Year<input type="number" [(ngModel)]="newSong.releaseYear" /></label>
-              <label>Spotify URL<input [(ngModel)]="newSong.spotifyUrl" placeholder="https://open.spotify.com/track/…" /></label>
+              <label>Spotify URL
+                <div style="display: flex; gap: 8px;">
+                  <input [(ngModel)]="newSong.spotifyUrl" placeholder="https://open.spotify.com/track/…" style="flex: 1;" />
+                  <button class="btn-bump-sm" (click)="fetchSpotifySong(newSong)" [disabled]="isFetchingSpotify" title="Fetch Metadata" style="height: 100%;">⬇ Fetch</button>
+                </div>
+              </label>
               <label>Embed URL<input [(ngModel)]="newSong.embedUrl" placeholder="https://open.spotify.com/embed/track/…" /></label>
               <label>AI Tools<input [(ngModel)]="newSong.aiToolsUsed" placeholder="Suno, Udio" /></label>
               <label class="full">Description<textarea [(ngModel)]="newSong.description" rows="2"></textarea></label>
@@ -196,16 +213,24 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
 
           <div class="loading" *ngIf="songsLoading">Loading…</div>
           <div class="error-msg" *ngIf="songsError">{{ songsError }}</div>
+          
+          <div class="songs-filters" *ngIf="!songsLoading">
+            <input type="text" [(ngModel)]="adminSongSearchQuery" placeholder="Search by song title..." class="filter-input" />
+            <select [(ngModel)]="adminSongSearchAlbumId" class="filter-select">
+              <option [ngValue]="null">All Albums</option>
+              <option *ngFor="let a of albums" [ngValue]="a.id">{{ a.title }}</option>
+            </select>
+          </div>
 
           <!-- Songs table -->
           <div class="songs-list" *ngIf="!songsLoading">
-            <div class="song-row" *ngFor="let song of songs">
+            <div class="song-row" *ngFor="let song of filteredAdminSongs">
               <div class="song-row-header" (click)="toggleSongEdit(song)">
                 <span class="song-order">{{ song.displayOrder }}</span>
                 <span class="song-title">{{ song.title }}</span>
                 <span class="song-genre">{{ song.genre }}</span>
                 <span class="song-year">{{ song.releaseYear }}</span>
-                <span class="featured-dot" [class.on]="song.featuredStatus" title="Featured">●</span>
+                <span class="featured-dot" [class.on]="song.featuredStatus" title="Toggle Featured" (click)="toggleFeatured(song, $event)">{{ song.featuredStatus ? '★' : '☆' }}</span>
                 <button class="btn-edit-sm">{{ editingSongId === song.id ? '▲ Close' : '✏ Edit' }}</button>
               </div>
 
@@ -225,7 +250,12 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                   <label>Album<select [ngModel]="song.album?.id" (ngModelChange)="song.album = {id: $event}"><option [ngValue]="undefined">None</option><option *ngFor="let a of albums" [ngValue]="a.id">{{ a.title }}</option></select></label>
                   <label>Genre<input [(ngModel)]="song.genre" /></label>
                   <label>Release Year<input type="number" [(ngModel)]="song.releaseYear" /></label>
-                  <label>Spotify URL<input [(ngModel)]="song.spotifyUrl" /></label>
+                  <label>Spotify URL
+                    <div style="display: flex; gap: 8px;">
+                      <input [(ngModel)]="song.spotifyUrl" style="flex: 1;" />
+                      <button class="btn-bump-sm" (click)="fetchSpotifySong(song)" [disabled]="isFetchingSpotify" title="Fetch Metadata" style="height: 100%;">⬇ Fetch</button>
+                    </div>
+                  </label>
                   <label>Embed URL<input [(ngModel)]="song.embedUrl" /></label>
                   <label>AI Tools<input [(ngModel)]="song.aiToolsUsed" /></label>
                   <label class="full">Description<textarea [(ngModel)]="song.description" rows="2"></textarea></label>
@@ -742,6 +772,15 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
       padding: 24px; margin-bottom: 24px;
     }
     .inline-form h3 { font-family: var(--font-serif); font-size: 1.1rem; color: #2a2017; margin-bottom: 18px; }
+    
+    .songs-filters {
+      display: flex; gap: 12px; margin-bottom: 16px;
+    }
+    .filter-input, .filter-select {
+      padding: 8px 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 0.9rem;
+    }
+    .filter-input { flex: 1; max-width: 300px; }
+    
     /* Responsive */
     @media (max-width: 900px) {
       .story-section { grid-template-columns: 1fr; }
@@ -951,7 +990,8 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
     .song-title { font-weight: 700; color: #2a2017; flex: 1; }
     .song-genre { font-size: 0.78rem; color: #888; }
     .song-year  { font-size: 0.78rem; color: #aaa; width: 36px; }
-    .featured-dot { font-size: 1rem; color: #ccc; }
+    .featured-dot { font-size: 1.2rem; color: #999; cursor: pointer; transition: color 0.2s, transform 0.2s; }
+    .featured-dot:hover { transform: scale(1.2); }
     .featured-dot.on { color: var(--amber); }
     .song-edit-form { padding: 20px; border-top: 1px solid #f0ebe0; background: #faf9f5; }
 
@@ -1111,6 +1151,162 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
   `]
 })
 export class AdminDashboardComponent implements OnInit {
+
+  isFetchingSpotify = false;
+
+  fetchSpotifyAlbum(album: any) {
+    if (!album.spotifyUrl) return;
+    this.isFetchingSpotify = true;
+    this.http.get<any>(`${API_BASE}/api/admin/spotify/album?url=${encodeURIComponent(album.spotifyUrl)}`, { headers: this.headers }).subscribe({
+      next: (data) => {
+        album.title = data.title || album.title;
+        album.releaseYear = data.releaseYear || album.releaseYear;
+        album.imageUrl = data.imageUrl || album.imageUrl;
+        this.isFetchingSpotify = false;
+      },
+      error: (err) => {
+        alert('Failed to fetch from Spotify. ' + (err.error?.error || err.message));
+        this.isFetchingSpotify = false;
+      }
+    });
+  }
+
+  refreshAlbumTracks(album: Album) {
+    if (!album.id) {
+      alert('Please save the album first.');
+      return;
+    }
+    if (!confirm('This will fetch the latest album metadata and forcefully push the cover art and release year to ALL existing songs associated with this album. Continue?')) {
+      return;
+    }
+    this.isFetchingSpotify = true;
+    this.http.get<any>(`${API_BASE}/api/admin/spotify/album?url=${encodeURIComponent(album.spotifyUrl!)}`, { headers: this.headers }).subscribe({
+      next: (data) => {
+        album.title = data.title || album.title;
+        album.releaseYear = data.releaseYear || album.releaseYear;
+        album.imageUrl = data.imageUrl || album.imageUrl;
+        
+        // Save album in DB just in case
+        this.http.put<Album>(`${API_BASE}/api/albums/${album.id}`, album, { headers: this.headers }).subscribe();
+        
+        const albumTracks = this.songs.filter(s => s.album?.id === album.id);
+        if (albumTracks.length === 0) {
+           alert('Album metadata fetched, but no tracks are currently assigned to this album to sync to.');
+           this.isFetchingSpotify = false;
+           return;
+        }
+
+        let updatedCount = 0;
+        albumTracks.forEach(song => {
+           song.imageUrl = album.imageUrl || song.imageUrl;
+           song.releaseYear = album.releaseYear || song.releaseYear;
+           this.http.put<Song>(`${API_BASE}/api/songs/${song.id}`, song, { headers: this.headers }).subscribe({
+              next: () => {
+                 updatedCount++;
+                 if (updatedCount === albumTracks.length) {
+                    this.loadSongs();
+                    alert(`Successfully synced cover art to ${updatedCount} tracks!`);
+                    this.isFetchingSpotify = false;
+                 }
+              },
+              error: (err) => {
+                 updatedCount++;
+                 if (updatedCount === albumTracks.length) {
+                    this.loadSongs();
+                    alert(`Finished, but some tracks failed to update.`);
+                    this.isFetchingSpotify = false;
+                 }
+              }
+           });
+        });
+      },
+      error: (err) => {
+        alert('Failed to fetch from Spotify. ' + (err.error?.error || err.message));
+        this.isFetchingSpotify = false;
+      }
+    });
+  }
+
+  importSpotifyTracks(album: Album) {
+    if (!album.spotifyUrl || !album.id) {
+      alert('Please save the album first before importing tracks.');
+      return;
+    }
+    if (!confirm('This will import all tracks from the Spotify album and add them as new songs. Continue?')) {
+      return;
+    }
+    this.isFetchingSpotify = true;
+    this.http.get<any>(`${API_BASE}/api/admin/spotify/album?url=${encodeURIComponent(album.spotifyUrl)}`, { headers: this.headers }).subscribe({
+      next: (data) => {
+        if (!data.tracks || data.tracks.length === 0) {
+          alert('No tracks found on this Spotify album.');
+          this.isFetchingSpotify = false;
+          return;
+        }
+
+        let savedCount = 0;
+        let highestOrder = this.songs.length > 0 ? Math.max(...this.songs.map(s => s.displayOrder || 0)) : 0;
+
+        data.tracks.forEach((trackDto: any) => {
+           highestOrder += 10;
+           const newSong: Song = {
+              title: trackDto.title || 'Unknown Track',
+              spotifyUrl: trackDto.spotifyUrl || '',
+              embedUrl: trackDto.embedUrl || '',
+              imageUrl: trackDto.imageUrl || album.imageUrl || '',
+              releaseYear: trackDto.releaseYear || album.releaseYear || new Date().getFullYear(),
+              genre: 'Roots',
+              aiToolsUsed: '',
+              featuredStatus: false,
+              displayOrder: highestOrder,
+              description: '',
+              album: { id: album.id! }
+           };
+           this.http.post<Song>(`${API_BASE}/api/songs`, newSong, { headers: this.headers }).subscribe({
+              next: () => {
+                 savedCount++;
+                 if (savedCount === data.tracks.length) {
+                    this.loadSongs();
+                    alert(`Successfully imported ${savedCount} tracks!`);
+                    this.isFetchingSpotify = false;
+                 }
+              },
+              error: (err) => {
+                 console.error('Failed to save track', trackDto.title, err);
+                 savedCount++;
+                 if (savedCount === data.tracks.length) {
+                    this.loadSongs();
+                    alert(`Import finished, but some tracks failed to save.`);
+                    this.isFetchingSpotify = false;
+                 }
+              }
+           });
+        });
+      },
+      error: (err) => {
+        alert('Failed to fetch from Spotify. ' + (err.error?.error || err.message));
+        this.isFetchingSpotify = false;
+      }
+    });
+  }
+
+  fetchSpotifySong(song: Song) {
+    if (!song.spotifyUrl) return;
+    this.isFetchingSpotify = true;
+    this.http.get<any>(`${API_BASE}/api/admin/spotify/track?url=${encodeURIComponent(song.spotifyUrl)}`, { headers: this.headers }).subscribe({
+      next: (data) => {
+        song.title = data.title || song.title;
+        song.releaseYear = data.releaseYear || song.releaseYear;
+        song.imageUrl = data.imageUrl || song.imageUrl;
+        song.embedUrl = data.embedUrl || song.embedUrl;
+        this.isFetchingSpotify = false;
+      },
+      error: (err) => {
+        alert('Failed to fetch from Spotify. ' + (err.error?.error || err.message));
+        this.isFetchingSpotify = false;
+      }
+    });
+  }
   tab: 'albums' | 'songs' | 'lyrics' | 'messages' | 'content' | 'artist' | 'news' = 'songs';
 
   songs: Song[] = [];
@@ -1183,6 +1379,22 @@ export class AdminDashboardComponent implements OnInit {
   albumsError = '';
   newAlbum: Album | null = null;
   editingAlbumId: number | null = null;
+
+  adminSongSearchQuery = '';
+  adminSongSearchAlbumId: number | null = null;
+
+  get filteredAdminSongs(): Song[] {
+    return this.songs.filter(s => {
+      let match = true;
+      if (this.adminSongSearchQuery) {
+        match = s.title.toLowerCase().includes(this.adminSongSearchQuery.toLowerCase());
+      }
+      if (match && this.adminSongSearchAlbumId) {
+        match = s.album?.id === this.adminSongSearchAlbumId;
+      }
+      return match;
+    });
+  }
 
   switchToAlbums(): void {
     this.tab = 'albums';
@@ -1400,6 +1612,20 @@ export class AdminDashboardComponent implements OnInit {
     this.http.post<Song>(`${API_BASE}/api/songs`, this.newSong, { headers: this.headers }).subscribe({
       next: s => { this.songs.push(s); this.newSong = null; },
       error: () => { alert('Save failed — check credentials.'); }
+    });
+  }
+
+  toggleFeatured(song: Song, event: Event) {
+    event.stopPropagation();
+    if (!song.id) return;
+    const oldStatus = song.featuredStatus;
+    song.featuredStatus = !song.featuredStatus;
+    this.http.put<Song>(`${API_BASE}/api/songs/${song.id}`, song, { headers: this.headers }).subscribe({
+      next: () => {},
+      error: (err) => {
+        song.featuredStatus = oldStatus;
+        alert('Failed to toggle featured status.');
+      }
     });
   }
 
