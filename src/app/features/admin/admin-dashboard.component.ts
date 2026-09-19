@@ -215,11 +215,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
           <div class="error-msg" *ngIf="songsError">{{ songsError }}</div>
           
           <div class="songs-filters" *ngIf="!songsLoading">
-            <input type="text" [(ngModel)]="adminSongSearchQuery" placeholder="Search by song title..." class="filter-input" />
-            <select [(ngModel)]="adminSongSearchAlbumId" class="filter-select">
-              <option [ngValue]="null">All Albums</option>
-              <option *ngFor="let a of albums" [ngValue]="a.id">{{ a.title }}</option>
-            </select>
+            <input type="text" [(ngModel)]="adminSongSearchQuery" placeholder="Search by song or album..." class="filter-input" style="width: 300px;" />
           </div>
 
           <!-- Songs table -->
@@ -1384,16 +1380,22 @@ export class AdminDashboardComponent implements OnInit {
   adminSongSearchAlbumId: number | null = null;
 
   get filteredAdminSongs(): Song[] {
-    return this.songs.filter(s => {
-      let match = true;
-      if (this.adminSongSearchQuery) {
-        match = s.title.toLowerCase().includes(this.adminSongSearchQuery.toLowerCase());
-      }
-      if (match && this.adminSongSearchAlbumId) {
-        match = s.album?.id === this.adminSongSearchAlbumId;
-      }
-      return match;
-    });
+    let list = this.songs;
+    if (this.adminSongSearchQuery) {
+      const q = this.adminSongSearchQuery.toLowerCase();
+      list = list.filter(s => {
+        const songTitle = s.title.toLowerCase();
+        const albumTitle = s.album?.title ? s.album.title.toLowerCase() : '';
+        const combined = `${songTitle} ${albumTitle}`;
+        const combinedReverse = `${albumTitle} ${songTitle}`;
+        
+        return songTitle.includes(q) || 
+               albumTitle.includes(q) || 
+               combined.includes(q) || 
+               combinedReverse.includes(q);
+      });
+    }
+    return list;
   }
 
   switchToAlbums(): void {
