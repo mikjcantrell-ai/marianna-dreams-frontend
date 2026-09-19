@@ -301,7 +301,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                   (focus)="pickerOpen=true; pickerHighlight=-1"
                   (blur)="closePicker()"
                   (keydown)="onPickerKey($event)"
-                  placeholder="Type to search songs…"
+                  placeholder="Type to search songs or albums…"
                   autocomplete="off" />
                 <div class="picker-dropdown" *ngIf="pickerOpen && filteredSongs.length">
                   <div class="picker-option"
@@ -309,7 +309,7 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
                        (mousedown)="selectPickerSong(s)"
                        [class.selected]="i === pickerHighlight"
                        [id]="'picker-opt-' + i">
-                    {{ s.title }}
+                    {{ s.title }} <span class="picker-album-label" *ngIf="s.album?.title">({{ s.album!.title }})</span>
                   </div>
                 </div>
                 <div class="picker-dropdown picker-empty" *ngIf="pickerOpen && songSearch && !filteredSongs.length">
@@ -1480,7 +1480,17 @@ export class AdminDashboardComponent implements OnInit {
 
   onSongSearch(): void {
     const q = this.songSearch.toLowerCase();
-    this.filteredSongs = this.songs.filter(s => s.title.toLowerCase().includes(q));
+    this.filteredSongs = this.songs.filter(s => {
+      const songTitle = s.title.toLowerCase();
+      const albumTitle = s.album?.title ? s.album.title.toLowerCase() : '';
+      const combined = `${songTitle} ${albumTitle}`;
+      const combinedReverse = `${albumTitle} ${songTitle}`;
+      
+      return songTitle.includes(q) || 
+             albumTitle.includes(q) || 
+             combined.includes(q) || 
+             combinedReverse.includes(q);
+    });
     this.pickerOpen = true;
     this.pickerHighlight = -1;
   }
