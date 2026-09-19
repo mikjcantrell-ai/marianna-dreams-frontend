@@ -319,6 +319,29 @@ const SECTION_TYPES = ['VERSE','PRE_CHORUS','CHORUS','BRIDGE','OUTRO'];
             <button class="btn-paste-toggle" (click)="pasteOpen=!pasteOpen" *ngIf="selectedSongId" id="paste-toggle-btn">
               {{ pasteOpen ? '▲ Close Paste' : '📋 Paste Lyrics' }}
             </button>
+            <button class="btn-paste-toggle" (click)="bulkImportOpen=!bulkImportOpen" id="bulk-import-toggle-btn">
+              {{ bulkImportOpen ? '▲ Close Bulk Import' : '📚 Bulk Import' }}
+            </button>
+          </div>
+
+          <!-- Bulk import panel -->
+          <div class="paste-panel" *ngIf="bulkImportOpen">
+            <div class="paste-header">
+              <strong>Bulk Import Multiple Songs</strong>
+              <span class="paste-hint">Format: <code>TITLE: Song Title</code> followed by blocks like <code>[Verse 1]</code>.</span>
+            </div>
+            <textarea
+              class="paste-textarea"
+              [(ngModel)]="bulkLyricsText"
+              rows="16"
+              placeholder="TITLE: Roots and Wings&#10;[Verse 1]&#10;You held me close...&#10;&#10;TITLE: Leaving Marianna&#10;[Chorus]&#10;And it's a bittersweet..."></textarea>
+            <div class="paste-actions">
+              <button class="btn-parse" (click)="doBulkImport()" [disabled]="bulkImportInProgress" id="do-bulk-import-btn">
+                {{ bulkImportInProgress ? 'Importing...' : '⚡ Process Bulk Import' }}
+              </button>
+              <span class="paste-note">Wipes existing lyrics for all matching songs.</span>
+            </div>
+            <div class="error-msg" style="margin-top: 15px; white-space: pre-wrap;" *ngIf="bulkImportLog">{{ bulkImportLog }}</div>
           </div>
 
           <!-- Smart paste panel -->
@@ -1335,6 +1358,10 @@ export class AdminDashboardComponent implements OnInit {
   pasteOpen      = false;
   rawLyricsPaste = '';
   parsedPreview: Lyric[] = [];
+  bulkImportOpen = false;
+  bulkLyricsText = '';
+  bulkImportLog = '';
+  bulkImportInProgress = false;
 
   // ── Messages state ────────────────────────────────────────────────────────
   messages: Inquiry[] = [];
@@ -1613,6 +1640,99 @@ export class AdminDashboardComponent implements OnInit {
     this.parsedPreview = [];
     this.pasteOpen = false;
     this.rawLyricsPaste = '';
+  }
+
+  // ── Bulk Import ───────────────────────────────────────────────────────────
+
+  doBulkImport(): void {
+    if (!this.bulkLyricsText.trim()) return;
+    this.bulkImportInProgress = true;
+    this.bulkImportLog = '';
+
+    // Split text by 'TITLE:' or 'Title:' or 'title:'
+    const sections = this.bulkLyricsText.split(/TITLE:\s*/i);
+    const requests: any[] = [];
+    let matchCount = 0;
+    let notFoundCount = 0;
+    const notFoundTitles: string[] = [];
+
+    for (const section of sections) {
+      if (!section.trim()) continue;
+      
+      const lines = section.trim().split('\n');
+      const titleLine = lines[0].trim();
+      const rawBody = lines.slice(1).join('\n');
+      
+      // Try to find the song
+      const song = this.songs.find(s => s.title.toLowerCase() === titleLine.toLowerCase());
+      if (song && song.id) {
+        // Parse the body
+        const blocks = this.parseRawToBlocks(rawBody);
+        requests.push({ songId: song.id, blocks: blocks });
+        matchCount++;
+      } else {
+        notFoundCount++;
+        notFoundTitles.push(titleLine);
+      }
+    }
+
+    if (requests.length === 0) {
+      this.bulkImportLog = `Found no matching songs in the database. (Unmatched: ${notFoundCount})`;
+      this.bulkImportInProgress = false;
+      return;
+    }
+
+    this.http.post(`${API_BASE}/api/lyrics/bulk-import`, requests, { headers: this.headers }).subscribe({
+      next: () => {
+        this.bulkImportInProgress = false;
+        let logMsg = `Successfully imported lyrics for ${matchCount} song(s).\n`;
+        if (notFoundCount > 0) {
+          logMsg += `Warning: ${notFoundCount} title(s) not found in the database:\n- ${notFoundTitles.join('\n- ')}\n`;
+        }
+        this.bulkImportLog = logMsg;
+        this.bulkLyricsText = '';
+        if (this.selectedSongId) {
+          // Reload the currently viewed song just in case it was modified
+          this.loadLyrics(this.selectedSongId);
+        }
+      },
+      error: (err) => {
+        this.bulkImportInProgress = false;
+        this.bulkImportLog = `Error occurred during import: ${err.message || 'Unknown error'}`;
+      }
+    });
+  }
+
+  private parseRawToBlocks(raw: string): Lyric[] {
+    const lines = raw.split('\n');
+    const blocks: Lyric[] = [];
+    let currentLabel = 'Verse 1';
+    let currentContent: string[] = [];
+    const flushBlock = () => {
+      const content = currentContent.join('\n').trim();
+      if (content) {
+        blocks.push({
+          sectionLabel: currentLabel,
+          sectionType: this.inferType(currentLabel),
+          content: content,
+          displayOrder: blocks.length + 1
+        });
+      }
+      currentContent = [];
+    };
+
+    for (let line of lines) {
+      line = line.trim();
+      const tagMatch = line.match(/^[\(\[](.+)[\)\]]$/);
+      if (tagMatch) {
+        flushBlock();
+        currentLabel = tagMatch[1].trim();
+      } else {
+        currentContent.push(line);
+      }
+    }
+    flushBlock();
+    return blocks;
   }
 
   startNewSong(): void {
