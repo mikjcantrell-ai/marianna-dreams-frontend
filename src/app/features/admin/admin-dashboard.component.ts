@@ -1436,7 +1436,11 @@ export class AdminDashboardComponent implements OnInit {
       next: () => {
         this.editingAlbumId = null;
       },
-      error: () => alert('Failed to update album.')
+      error: (err) => {
+        console.error('Update album error:', err);
+        const msg = err.error?.message || err.error?.error || err.statusText || 'Unknown error';
+        alert(`Failed to update album: [${err.status}] ${msg}`);
+      }
     });
   }
 
